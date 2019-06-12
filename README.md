@@ -1,2 +1,2 @@
 # Eyement
-Design for the lenguage "Eyement"
+Design for the language "Eyement"
