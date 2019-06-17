@@ -795,15 +795,6 @@ int Analiza(QString cadena){
             edo=22;
         }
 
-        /*if(edo==509){
-            QString texto1=textoA.mid(textoA.length()-4,textoA.length());
-            QString texto2=textoA.mid(textoA.length()-5,textoA.length());
-            //std::cout << texto1.toUtf8().constData() << std::endl;
-            if(texto1.contains(".lye") || texto2.contains(".lyes")){
-                edo=131;
-            }
-        }*/
-
         if(edo==106 && car=='"'){
             textoA.append(car);
             edo=106;
@@ -812,7 +803,7 @@ int Analiza(QString cadena){
         car=cadenaStd[numero];
 
         numero++;
-        //cout<<edo<<endl;
+
     }
     if(textoA=="&&" || textoA.contains("&&")){
         edo=113;
@@ -1384,11 +1375,6 @@ void ConstruyeGramatica(){
     imprimePila();
     while(edoMP<500 && token<500 && !pilaEjecucion.empty()){
 
-     /*cout<<"Nueva pila"<<endl;
-    for(int i=0;i<pilaEjecucion.size();i++){
-        cout<<pilaEjecucion.at(i)<<endl;
-
-    }*/
         if(quieroToken){
             token=Analiza(texto);
             quieroToken=false;
@@ -1406,7 +1392,6 @@ void ConstruyeGramatica(){
             imprimePila();
         }
         if(pilaEjecucion.top()>=100){
-            cout<<"Token "<<token<<" Token en la pila "<<pilaEjecucion.top()<<endl;
             if(pilaEjecucion.top()==token){
             pilaEjecucion.pop();
             if(texto!=""){
@@ -1455,9 +1440,6 @@ void MainWindow::on_pushButton_clicked()
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
     texto=ui->textoAnalizar->toPlainText();
-    /*while(texto!=""){
-    Analiza(texto);
-    }*/
     ConstruyeGramatica();
     if(errores!=""){
         QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos");
@@ -1465,7 +1447,6 @@ void MainWindow::on_pushButton_clicked()
     ui->Token->appendPlainText(Tokens);
     ui->Error->appendPlainText(errores);
     ui->Token_2->appendPlainText(pasosPila);
-    //std::cout << texto.toUtf8().constData() << std::endl;
 
 }
 
