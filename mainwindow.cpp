@@ -434,6 +434,27 @@ void Token(int e){
     case 152:
         Tokens+=textoA+" Palabra reservada read\n";
         break;
+    case 153:
+        Tokens+=textoA+" Palabra reservada principal\n";
+        break;
+    case 154:
+        Tokens+=textoA+" Palabra reservada elseif\n";
+        break;
+    case 155:
+        Tokens+=textoA+" Palabra reservada do\n";
+        break;
+    case 156:
+        Tokens+=textoA+" Palabra reservada function\n";
+        break;
+    case 157:
+        Tokens+=textoA+" Palabra reservada endfunction\n";
+        break;
+    case 158:
+        Tokens+=textoA+" Palabra reservada null\n";
+        break;
+    case 159:
+        Tokens+=textoA+" Palabra reservada include\n";
+        break;
     }
 
 }
@@ -661,15 +682,27 @@ int evaluaPR(){
     if(textoA=="read" || temp=="read"){
         return 152;
     }
-    if((textoA=="principal" || temp=="principal")  ||
-       (textoA=="elseif" || temp=="elseif")  ||
-       (textoA=="do" || temp=="do") ||
-
-       (textoA=="function" || temp=="function") ||
-       (textoA=="endfunction" || temp=="endfunction") || (textoA=="null" || temp=="null") ||
-       (textoA=="include" || temp=="include")){
-                    return 100;
-                }
+    if(textoA=="principal" || temp=="principal"){
+        return 153;
+    }
+    if(textoA=="elseif" || temp=="elseif"){
+        return 154;
+    }
+    if(textoA=="do" || temp=="do"){
+        return 155;
+    }
+    if(textoA=="function" || temp=="function"){
+        return 156;
+    }
+    if(textoA=="endfunction" || temp=="endfunction"){
+        return 157;
+    }
+    if(textoA=="null" || temp=="null"){
+        return 158;
+    }
+    if(textoA=="include" || temp=="include"){
+        return 159;
+    }
     return 101;
 }
 
