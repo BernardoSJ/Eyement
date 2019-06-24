@@ -1,0 +1,4 @@
+class miclase
+begin
+
+end
