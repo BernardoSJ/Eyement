@@ -1406,7 +1406,8 @@ void ConstruyeGramatica(){
     pilaEjecucion.push(1);
     bool quieroToken=true,llena=true;
     imprimePila();
-    while(edoMP<500 && token<500 && !pilaEjecucion.empty()){
+    bool sinError=true;
+    while(/*edoMP<500 && token<500 &&*/ !pilaEjecucion.empty()){
 
         if(quieroToken){
             token=Analiza(texto);
@@ -1437,11 +1438,14 @@ void ConstruyeGramatica(){
                 QMessageBox msgBox;
                 msgBox.setText("Hay errores en la sintaxis porque se esperaba un "+tp+" y se recibio un "+tr);
                 msgBox.exec();
-                break;
+                pilaEjecucion.pop();
+                sinError=false;
+                //break;
             }
         }else{
             if(edoMP>500){
                 Errores(edoMP+1);
+                pilaEjecucion.pop();
             }else{
                 if(pilaEjecucion.top()>0 && pilaEjecucion.top()<=34){
                     llena=true;
@@ -1453,10 +1457,12 @@ void ConstruyeGramatica(){
             if(pilaEjecucion.top()=='$'){
                 pilaEjecucion.pop();
                 imprimePila();
+                if(sinError){
                 QMessageBox msgBox;
                 msgBox.setText("Se llego al final de la entrada y no hay errores");
                 msgBox.exec();
                 break;
+                }
             }
             }
 
@@ -1485,6 +1491,7 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
+    ui->textoAnalizar->setPlainText("");
    QString ruta=QFileDialog::getOpenFileName(
                 this,tr("Abrir archivo"),
                 "C://",
