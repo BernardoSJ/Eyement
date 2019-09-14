@@ -1407,7 +1407,7 @@ void ConstruyeGramatica(){
     bool quieroToken=true,llena=true;
     imprimePila();
     bool sinError=true;
-    while(/*edoMP<500 && token<500 &&*/ !pilaEjecucion.empty()){
+    while(!pilaEjecucion.empty()){
 
         if(quieroToken){
             token=Analiza(texto);
@@ -1440,11 +1440,11 @@ void ConstruyeGramatica(){
                 msgBox.exec();
                 pilaEjecucion.pop();
                 sinError=false;
-                //break;
             }
         }else{
             if(edoMP>500){
                 Errores(edoMP+1);
+                sinError=false;
                 pilaEjecucion.pop();
             }else{
                 if(pilaEjecucion.top()>0 && pilaEjecucion.top()<=34){
