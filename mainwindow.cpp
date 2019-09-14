@@ -1435,17 +1435,15 @@ void ConstruyeGramatica(){
             }else{
                 QString tr=evaluaElemento(token);
                 QString tp=evaluaElemento(pilaEjecucion.top());
-                QMessageBox msgBox;
-                msgBox.setText("Hay errores en la sintaxis porque se esperaba un "+tp+" y se recibio un "+tr);
-                msgBox.exec();
-                pilaEjecucion.pop();
+                errores+="Hay errores en la sintaxis porque se esperaba un "+tp+" y se recibio un "+tr;
+                token=pilaEjecucion.top();
                 sinError=false;
             }
         }else{
             if(edoMP>500){
                 Errores(edoMP+1);
                 sinError=false;
-                pilaEjecucion.pop();
+
             }else{
                 if(pilaEjecucion.top()>0 && pilaEjecucion.top()<=34){
                     llena=true;
