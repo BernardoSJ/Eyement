@@ -1295,7 +1295,7 @@ QString evaluaElemento(int token){
         break;
     case 125:
         //cout<<"Punto"<<endl;
-
+        return ".";
         break;
     case 126:
         //cout<<"Parentesis abierto"<<endl;
@@ -1307,11 +1307,11 @@ QString evaluaElemento(int token){
         break;
     case 128:
         //cout<<"Corchete abierto"<<endl;
-
+        return "[";
         break;
     case 129:
         //cout<<"Corchete cerrado"<<endl;
-
+        return "]";
         break;
     case 130:
         //cout<<"Es una coma"<<endl;
@@ -1407,7 +1407,7 @@ void ConstruyeGramatica(){
     bool quieroToken=true,llena=true;
     imprimePila();
     bool sinError=true;
-    while(/*edoMP<500 && token<500 &&*/ !pilaEjecucion.empty()){
+    while(!pilaEjecucion.empty()){
 
         if(quieroToken){
             token=Analiza(texto);
@@ -1435,17 +1435,26 @@ void ConstruyeGramatica(){
             }else{
                 QString tr=evaluaElemento(token);
                 QString tp=evaluaElemento(pilaEjecucion.top());
-                QMessageBox msgBox;
-                msgBox.setText("Hay errores en la sintaxis porque se esperaba un "+tp+" y se recibio un "+tr);
-                msgBox.exec();
-                pilaEjecucion.pop();
+                errores+="Hay errores en la sintaxis porque se esperaba un "+tp+" y se recibio un "+tr+"\n";
+                token=pilaEjecucion.top();
                 sinError=false;
-                //break;
             }
         }else{
             if(edoMP>500){
                 Errores(edoMP+1);
+                sinError=false;
                 pilaEjecucion.pop();
+                imprimePila();
+                /*
+                 *This code didn´t work as I (BSJ) would have wanted so I thought in other way to do the right analysis and so it worked as
+                 * you can see above
+                 for(int i=0;i<49;i++){
+                    if(matrizPredictiva[pilaEjecucion.top()][i]<500){
+                        pilaEjecucion.pop();
+                        pilaEjecucion.push(matrizPredictiva[pilaEjecucion.top()][i]);
+                        break;
+                    }
+                }*/
             }else{
                 if(pilaEjecucion.top()>0 && pilaEjecucion.top()<=34){
                     llena=true;
