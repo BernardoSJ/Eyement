@@ -522,7 +522,7 @@ void Errores(int e){
         errores+=textoA+" 516: Se esperaba un tipo de dato\n";
         break;
     case 517:
-        errores+=textoA+" 517: Se esperaba un identificador o el  inicio o fien de un estatuto\n";
+        errores+=textoA+" 517: Se esperaba un identificador o el  inicio o bien de un estatuto\n";
         break;
     case 518:
         errores+=textoA+" 518: Se esperaba la palabra if\n";
@@ -1413,9 +1413,7 @@ void ConstruyeGramatica(){
             token=Analiza(texto);
             quieroToken=false;
         }
-        if(token>=500){
-            break;
-        }
+
         if(llena){
             colMP=RelacionaGramatica(token);
             filaMP=pilaEjecucion.top()-1;
