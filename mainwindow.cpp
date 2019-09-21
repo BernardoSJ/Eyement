@@ -119,21 +119,21 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {20,21},//H EXPR5
                                 {-1},//ε
                                 {21,26},//EXPR5 OPREL
-                                {22,23},//I TERM
+                                {22,704,23},//I (Evaluar operadores y evaluar tipos) TERM
                                 {-1},//ε
-                                {21,107},//EXPR5 +
-                                {21,108},//EXPR5 -
-                                {24,25},//J FACT
+                                {21,703,107},//EXPR5 (insertar pila de operadores el operador recibido) +
+                                {21,703,108},//EXPR5 (insertar pila de operadores el operador recibido) -
+                                {24,704,25},//J (Evaluar operadores y evaluar tipos) FACT
                                 {-1},//ε
-                                {23,109},//TERM *
-                                {23,110},//TERM /
-                                {23,111},//TERM %
-                                {101},//id
-                                {102},//cteentera
-                                {103},//ctereal
-                                {104},//ctenotacioncientifica
-                                {105},//ctecaracter
-                                {106},//ctestring
+                                {23,703,109},//TERM (insertar pila de operadores el operador recibido) *
+                                {23,703,110},//TERM (insertar pila de operadores el operador recibido) /
+                                {23,703,111},//TERM  (insertar pila de operadores el operador recibido) %
+                                {702,101},//(Acción insertar en la pila de tipos el identificador recibido) id
+                                {702,102},//(Acción insertar en la pila de tipos el identificador recibido) cteentera
+                                {702,103},//(Acción insertar en la pila de tipos el identificador recibido) ctereal
+                                {702,104},//(Acción insertar en la pila de tipos el identificador recibido) ctenotacioncientifica
+                                {702,105},//(Acción insertar en la pila de tipos el identificador recibido) ctecaracter
+                                {702,106},//(Acción insertar en la pila de tipos el identificador recibido) ctestring
                                 {127,13,126},// ) EXPR (
                                 {117},//==
                                 {116},//!=
@@ -1253,23 +1253,23 @@ QString evaluaElemento(int elemento){
         break;
     case 107:
         //cout<<"Suma"<<endl;
-        return "Operadorsuma";
+        return "+";
         break;
     case 108:
         //cout<<"Resta"<<endl;
-        return "Operadorresta";
+        return "-";
         break;
     case 109:
         //cout<<"Multiplicación"<<endl;
-        return "Operadormultipiliacación";
+        return "*";
         break;
     case 110:
         //cout<<"División"<<endl;
-        return "Operadordivisión";
+        return "/";
         break;
     case 111:
         //cout<<"Modulo"<<endl;
-        return "Operadormodulo";
+        return "%";
         break;
     case 112:
         //cout<<"Comentario"<<endl;
@@ -1285,11 +1285,11 @@ QString evaluaElemento(int elemento){
         break;
     case 115:
         //cout<<"Operador NOT"<<endl;
-        return "OperadorNOT";
+        return "!";
         break;
     case 116:
         //cout<<"Operador Diferente"<<endl;
-        return "Operadordiferente";
+        return "!=";
         break;
     case 117:
         //cout<<"Igual"<<endl;
@@ -1459,6 +1459,11 @@ int buscaTipo(){
     }
     return pos;
 }
+void relacionaTiposOper(){
+    for(int i=0;i<25;i++){
+
+    }
+}
 void accionesSemanticayCodigoIntermedio(int accion){
     switch(accion){
         case 700:
@@ -1473,21 +1478,44 @@ void accionesSemanticayCodigoIntermedio(int accion){
             }
             imprimePilaOperandos();
             break;
-        case 703:
-            break;
         case 702:
-            int i=buscaTipo();
-            if(i==-1){
-               Errores(545);
-               pilaTipos.push(138);
-               imprimePilaTipos();
-               sinError=false;
+            if(edo>=102 && edo<=106){
+                if(edo==102){
+                    pilaTipos.push(138);
+                    imprimePilaTipos();
+                }
+                if(edo==103 || edo==104){
+                    pilaTipos.push(139);
+                    imprimePilaTipos();
+                }
+                if(edo==105){
+                    pilaTipos.push(140);
+                    imprimePilaTipos();
+                }
+                if(edo==106){
+                    pilaTipos.push(141);
+                    imprimePilaTipos();
+                }
             }else{
-               pilaTipos.push(pilaTiposBusqueda.at(i));
-               imprimePilaTipos();
+                int i=buscaTipo();
+                if(i==-1){
+                    Errores(545);
+                    pilaTipos.push(138);
+                    imprimePilaTipos();
+                    sinError=false;
+                }else{
+                    pilaTipos.push(pilaTiposBusqueda.at(i));
+                    imprimePilaTipos();
             }
+            }
+        break;
+        case 703:
+            pilaOperadores.push(edo);
+            imprimePilaOperadores();
             break;
-
+        case 704:
+            relacionaTiposOper();
+            break;
     }
 }
 
@@ -1594,6 +1622,7 @@ void MainWindow::on_pushButton_clicked()
     pilaTipos.clear();
     pilaOperandosBusqueda.clear();
     pilaTiposBusqueda.clear();
+    pilaOperadores.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
     if(errores!=""){
@@ -1604,7 +1633,7 @@ void MainWindow::on_pushButton_clicked()
     ui->Token_2->appendPlainText(pasosPila);
     ui->pilaOperandos->appendPlainText(pilaOp);
     ui->pilaTipos->appendPlainText(pilaT);
-
+    ui->pilaOperadores->appendPlainText(pilaOper);
 }
 
 void MainWindow::on_pushButton_2_clicked()

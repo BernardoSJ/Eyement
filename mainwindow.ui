@@ -302,7 +302,7 @@
      <string>Pila de Saltos</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="pilaOperadores_2">
+   <widget class="QPlainTextEdit" name="pilaSaltos">
     <property name="geometry">
      <rect>
       <x>1230</x>
