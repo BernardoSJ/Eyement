@@ -9,7 +9,10 @@
 
 using namespace std;
 
-static QStack<int> pilaEjecucion;
+static QStack<int> pilaEjecucion;//Pila análisis sintactico
+static QStack<QString> pilaOperandos;//Pila de operandos
+static QStack<QString> pilaOperandosBusqueda;//Pila para facilitar la busqueda de tipos en un futuro
+static QStack<int> pilaTipos;//Pila de tipos para los identificadores
 static int edo;
 
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
@@ -80,9 +83,9 @@ static int producciones[71][8]={{2,3},//A DECLARA-LIB
                                 {3,124,131,135},//DECLARA-LIB ; id_lib import
                                 {-1},//ε
                                 {5,136},//B def
-                                {6,101},//C id
+                                {6,700,101},//C acción 1 semantico id
                                 {5,130},//B ,
-                                {4,124,7,137},//DECLARA ; TIPO as
+                                {4,124,701,7,137},//DECLARA ; acción 2 semantico TIPO as
                                 {138},//integer
                                 {139},//float
                                 {140},//char
@@ -240,9 +243,6 @@ QString Tokens;
 QString textoA;
 QString texto;
 void Token(int e){
-
-
-
     switch(e){
     case 100:
         //cout<<"Palabra reservada"<<endl;
@@ -800,14 +800,10 @@ int Analiza(QString cadena){
             textoA.append(car);
             edo=105;
         }
-
         if(edo==105 && car==39){
             textoA.append(car);
             edo=105;
         }
-
-
-
         if(edo==100){
             edo=evaluaPR();
         }
@@ -850,9 +846,9 @@ int Analiza(QString cadena){
         edo=508;
     }
 
-
+    //Elimina lo que hay enfrente de una cadena
     int conta=0;
-    std::string cadenaStd2 = textoA.toStdString();
+
     for(int i=0;i<textoA.length();i++){
         char car=cadenaStd[i];
         if(car==' ' || car=='\t' || car==32 )
@@ -864,17 +860,11 @@ int Analiza(QString cadena){
         textoA.remove(0,conta);
     }
 
-
-
-
-
     if(edo>=100 && edo<=199){
         Token(edo);
     }else{
         Errores(edo);
     }
-
-
 
 return edo;
 }
@@ -1085,8 +1075,11 @@ void LlenarPilaProduccion(int fila){
     }
 }
 
-QString evaluaElemento(int token){
-    switch(token){
+QString evaluaElemento(int elemento){
+    if(elemento>=700){
+        return "";
+    }
+    switch(elemento){
     case -1:
         return "ε";
     case 1:
@@ -1395,8 +1388,33 @@ void imprimePila(){
         QString ele=evaluaElemento(pilaEjecucion.at(i));
         pasosPila+=ele+" ";
     }
-    pasosPila+="\n";
+    pasosPila+="\n\n";
 }
+QString pilaOp;
+QString pilaT;
+void accionesSemanticayCodigoIntermedio(int accion){
+    switch(accion){
+        case 700:
+            pilaOperandos.push(textoA);
+            pilaOperandosBusqueda.push(textoA);
+            for(int i=0;i<pilaOperandos.size();i++){
+                pilaOp+=pilaOperandos.at(i)+" ";
+            }
+            pilaOp+="\n\n";
+            break;
+        case 701:
+            while(!pilaOperandos.isEmpty()){
+                pilaTipos.push(edo);
+                pilaOperandos.pop();
+            }
+            for(int i=0;i<pilaTipos.size();i++){
+                pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
+            }
+            pilaT+="\n\n";
+            break;
+    }
+}
+
 void ConstruyeGramatica(){
     int token=0,edoMP=0;
     int colMP=0,filaMP=0;
@@ -1431,6 +1449,10 @@ void ConstruyeGramatica(){
             quieroToken=true;
             }
             imprimePila();
+            if(pilaEjecucion.top()>=700){
+                accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
+                pilaEjecucion.pop();
+            }
             }else{
                 QString tr=evaluaElemento(token);
                 QString tp=evaluaElemento(pilaEjecucion.top());
@@ -1484,9 +1506,15 @@ void MainWindow::on_pushButton_clicked()
     Tokens="";
     errores="";
     pasosPila="";
+    pilaOp="";
+    pilaT="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
+    ui->pilaOperandos->setPlainText("");
+    ui->pilaTipos->setPlainText("");
+    pilaTipos.clear();
+    pilaOperandosBusqueda.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
     if(errores!=""){
@@ -1495,6 +1523,8 @@ void MainWindow::on_pushButton_clicked()
     ui->Token->appendPlainText(Tokens);
     ui->Error->appendPlainText(errores);
     ui->Token_2->appendPlainText(pasosPila);
+    ui->pilaOperandos->appendPlainText(pilaOp);
+    ui->pilaTipos->appendPlainText(pilaT);
 
 }
 
