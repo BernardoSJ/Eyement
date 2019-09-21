@@ -13,7 +13,10 @@ static QStack<int> pilaEjecucion;//Pila análisis sintactico
 static QStack<QString> pilaOperandos;//Pila de operandos
 static QStack<QString> pilaOperandosBusqueda;//Pila para facilitar la busqueda de tipos en un futuro
 static QStack<int> pilaTipos;//Pila de tipos para los identificadores
+static QStack<int> pilaTiposBusqueda;//Pila para los tipos
+static QStack<int> pilaOperadores;//Pila de operadores que se ingresan
 static int edo;
+static bool sinError; //Varibale para medir si hay error
 
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
                     {2,100,100,100,100,100,100,100,100,100,2,1,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,3,100,100,100},
@@ -77,7 +80,7 @@ static int matrizPredictiva[34][49]={{1,510,1,510,510,510,510,510,510,510,510,51
 
 
 
-static int producciones[71][8]={{2,3},//A DECLARA-LIB
+static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {132,8,4,133,101,134}, //end ESTATUTOS DECLARA begin id class
                                 {-1},//ε
                                 {3,124,131,135},//DECLARA-LIB ; id_lib import
@@ -139,7 +142,7 @@ static int producciones[71][8]={{2,3},//A DECLARA-LIB
                                 {118},//>
                                 {119},//>=
                                 {150},//enter
-                                {13,122,101},//EXPR = id
+                                {13,703,122,702,101},//EXPR (insertar pila de operadores el operador recibido) = (Acción insertar en la pila de tipos el identificador recibido) id
                                 {30,126,151},//K ( write
                                 {31,13},//L EXPR
                                 {127},// )
@@ -630,6 +633,12 @@ void Errores(int e){
     case 543:
         errores+=textoA+" 543: Se esperaba un identificador o una coma\n";
         break;
+    case 544:
+        errores+="544: Error entre tipos\n";
+        break;
+    case 545:
+        errores+=textoA+" 545: Variable no declarada\n";
+        break;
     default:
         errores+="Revisa tu sintaxis quizas pusiste algo que no debe ir\n";
         break;
@@ -1095,7 +1104,7 @@ int RelacionaGramatica(int estado){
 }
 
 void LlenarPilaProduccion(int fila){
-    for(int i=0;i<8;i++){
+    for(int i=0;i<15;i++){
         if(producciones[fila][i]!=0){
         pilaEjecucion.push(producciones[fila][i]);
         }
@@ -1419,26 +1428,66 @@ void imprimePila(){
 }
 QString pilaOp;
 QString pilaT;
+QString pilaOper;
+void imprimePilaOperandos(){
+    for(int i=0;i<pilaOperandos.size();i++){
+        pilaOp+=pilaOperandos.at(i)+" ";
+    }
+    pilaOp+="\n\n";
+}
+void imprimePilaTipos(){
+    for(int i=0;i<pilaTipos.size();i++){
+        pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
+    }
+    pilaT+="\n\n";
+}
+void imprimePilaOperadores(){
+    for(int i=0;i<pilaOperadores.size();i++){
+        pilaOper+=evaluaElemento(pilaOperadores.at(i))+" ";
+    }
+    pilaOper+="\n\n";
+}
+int buscaTipo(){
+    int pos;
+    for(int i=0;i<pilaOperandosBusqueda.size();i++){
+        if(textoA.contains(pilaOperandosBusqueda.at(i))){
+            pos=i;
+            break;
+        }else{
+            pos=-1;
+        }
+    }
+    return pos;
+}
 void accionesSemanticayCodigoIntermedio(int accion){
     switch(accion){
         case 700:
             pilaOperandos.push(textoA);
             pilaOperandosBusqueda.push(textoA);
-            for(int i=0;i<pilaOperandos.size();i++){
-                pilaOp+=pilaOperandos.at(i)+" ";
-            }
-            pilaOp+="\n\n";
+            imprimePilaOperandos();
             break;
         case 701:
             while(!pilaOperandos.isEmpty()){
-                pilaTipos.push(edo);
+                pilaTiposBusqueda.push(edo);
                 pilaOperandos.pop();
             }
-            for(int i=0;i<pilaTipos.size();i++){
-                pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
-            }
-            pilaT+="\n\n";
+            imprimePilaOperandos();
             break;
+        case 703:
+            break;
+        case 702:
+            int i=buscaTipo();
+            if(i==-1){
+               Errores(545);
+               pilaTipos.push(138);
+               imprimePilaTipos();
+               sinError=false;
+            }else{
+               pilaTipos.push(pilaTiposBusqueda.at(i));
+               imprimePilaTipos();
+            }
+            break;
+
     }
 }
 
@@ -1452,7 +1501,7 @@ void ConstruyeGramatica(){
     pilaEjecucion.push(1);
     bool quieroToken=true,llena=true;
     imprimePila();
-    bool sinError=true;
+    sinError=true;
     while(!pilaEjecucion.empty()){
 
         if(quieroToken){
@@ -1535,17 +1584,20 @@ void MainWindow::on_pushButton_clicked()
     pasosPila="";
     pilaOp="";
     pilaT="";
+    pilaOper="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
     ui->pilaOperandos->setPlainText("");
     ui->pilaTipos->setPlainText("");
+    ui->pilaOperadores->setPlainText("");
     pilaTipos.clear();
     pilaOperandosBusqueda.clear();
+    pilaTiposBusqueda.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
     if(errores!=""){
-        QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos");
+        QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos o semánticos");
     }
     ui->Token->appendPlainText(Tokens);
     ui->Error->appendPlainText(errores);
