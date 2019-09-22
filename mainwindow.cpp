@@ -9,9 +9,15 @@
 
 using namespace std;
 
-static QStack<int> pilaEjecucion;
+static QStack<int> pilaEjecucion;//Pila análisis sintactico
+static QStack<QString> pilaOperandos;//Pila de operandos
+static QStack<QString> pilaOperandosBusqueda;//Pila para facilitar la busqueda de tipos en un futuro
+static QStack<int> pilaTipos;//Pila de tipos para los identificadores
+static QStack<int> pilaTiposBusqueda;//Pila para los tipos
+static QStack<int> pilaOperadores;//Pila de operadores que se ingresan
 static int edo;
-//Hola culeros les habla el anticristo    
+static bool sinError; //Varibale para medir si hay error
+
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
                     {2,100,100,100,100,100,100,100,100,100,2,1,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,3,100,100,100},
                     {2,22,101,101,101,101,101,101,101,101,2,2,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,3,101,101,101},
@@ -74,77 +80,105 @@ static int matrizPredictiva[34][49]={{1,510,1,510,510,510,510,510,510,510,510,51
 
 
 
-static int producciones[71][8]={{2,3},
-                                {132,8,4,133,101,134},
-                                {-1},
-                                {3,124,131,135},
-                                {-1},
-                                {5,136},
-                                {6,101},
-                                {5,130},
-                                {4,124,7,137},
-                                {138},
-                                {139},
-                                {140},
-                                {141},
-                                {142},
-                                {-1},
-                                {8,124,28},
-                                {8,124,9},
-                                {8,124,11},
-                                {8,124,12},
-                                {8,124,32},
-                                {8,124,29},
-                                {8,124,27},
-                                {10,8,127,13,126,143},
-                                {144},
-                                {144,8,145},
-                                {146,8,127,13,126,147},
-                                {148,8,127,13,123,28,126,149},
-                                {14,15},
-                                {-1},
-                                {13,114},
-                                {16,17},
-                                {-1},
-                                {15,113},
-                                {18},
-                                {19},
-                                {19,115},
-                                {20,21},
-                                {-1},
-                                {21,26},
-                                {22,23},
-                                {-1},
-                                {21,107},
-                                {21,108},
-                                {24,25},
-                                {-1},
-                                {23,109},
-                                {23,110},
-                                {23,111},
-                                {101},
-                                {102},
-                                {103},
-                                {104},
-                                {105},
-                                {106},
-                                {127,13,126},
-                                {117},
-                                {116},
-                                {120},
-                                {121},
-                                {118},
-                                {119},
-                                {150},
-                                {13,122,101},
-                                {30,126,151},
-                                {31,13},
-                                {127},
-                                {30,130},
-                                {33,126,152},
-                                {34,101},
-                                {127},
-                                {33,130}};
+static int producciones[71][15]={{2,3},//A DECLARA-LIB
+                                {132,8,4,133,101,134}, //end ESTATUTOS DECLARA begin id class
+                                {-1},//ε
+                                {3,124,131,135},//DECLARA-LIB ; id_lib import
+                                {-1},//ε
+                                {5,136},//B def
+                                {6,700,101},//C acción 1 semantico id
+                                {5,130},//B ,
+                                {4,124,701,7,137},//DECLARA ; acción 2 semantico TIPO as
+                                {138},//integer
+                                {139},//float
+                                {140},//char
+                                {141},//string
+                                {142},//boolean
+                                {-1},//ε
+                                {8,124,28},//ESTATUTOS ; EST_ASIG
+                                {8,124,9},//ESTATUTOS ; EST_IF
+                                {8,124,11},//ESTATUTOS ; EST_WHILE
+                                {8,124,12},//ESTATUTOS ; EST_FOR
+                                {8,124,32},//ESTATUTOS ; EST_READ
+                                {8,124,29},//ESTATUTOS ; EST_WRITE
+                                {8,124,27},//ESTATUTOS ; EST_ENTER
+                                {10,8,127,13,126,143},//D ESTATUTOS ) EXPR ( if
+                                {144},//endif
+                                {144,8,145},//endif ESTATUTOS else
+                                {146,8,127,13,126,147},//endwhile ESTATUTOS ) EXPR ( while
+                                {148,8,127,13,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
+                                {14,15},//E EXPR2
+                                {-1},//ε
+                                {13,114},//EXPR ||
+                                {16,17},// F EXPR3
+                                {-1},//ε
+                                {15,113},//EXPR2 &&
+                                {18},//G
+                                {19},//EXPR4
+                                {19,115},//EXPR4 !
+                                {20,21},//H EXPR5
+                                {-1},//ε
+                                {21,26},//EXPR5 OPREL
+                                {22,23},//I (Evaluar operadores y evaluar tipos) TERM
+                                {-1},//ε
+                                {21,703,107},//EXPR5 (insertar pila de operadores el operador recibido) +
+                                {21,703,108},//EXPR5 (insertar pila de operadores el operador recibido) -
+                                {24,25},//J (Evaluar operadores y evaluar tipos) FACT
+                                {-1},//ε
+                                {23,703,109},//TERM (insertar pila de operadores el operador recibido) *
+                                {23,703,110},//TERM (insertar pila de operadores el operador recibido) /
+                                {23,703,111},//TERM  (insertar pila de operadores el operador recibido) %
+                                {702,101},//(Acción insertar en la pila de tipos el identificador recibido) id
+                                {702,102},//(Acción insertar en la pila de tipos el identificador recibido) cteentera
+                                {702,103},//(Acción insertar en la pila de tipos el identificador recibido) ctereal
+                                {702,104},//(Acción insertar en la pila de tipos el identificador recibido) ctenotacioncientifica
+                                {702,105},//(Acción insertar en la pila de tipos el identificador recibido) ctecaracter
+                                {702,106},//(Acción insertar en la pila de tipos el identificador recibido) ctestring
+                                {127,13,126},// ) EXPR (
+                                {117},//==
+                                {116},//!=
+                                {120},//<
+                                {121},//<=
+                                {118},//>
+                                {119},//>=
+                                {150},//enter
+                                {13,703,122,702,101},//EXPR (insertar pila de operadores el operador recibido) = (Acción insertar en la pila de tipos el identificador recibido) id
+                                {30,126,151},//K ( write
+                                {31,13},//L EXPR
+                                {127},// )
+                                {30,130},// K ,
+                                {33,126,152},//M ( read
+                                {34,101},//N id
+                                {127},// )
+                                {33,130}//M ,
+                                };
+
+static int matrizDeTipos[25][7]={{138,138,138,139,138,142,544},
+                                 {138,139,139,139,544,142,544},
+                                 {138,140,544,544,544,544,544},
+                                 {138,141,544,544,544,544,544},
+                                 {138,142,544,544,544,544,544},
+                                 {139,138,139,139,544,142,544},
+                                 {139,139,139,139,544,142,544},
+                                 {139,140,544,544,544,544,544},
+                                 {139,141,544,544,544,544,544},
+                                 {139,142,544,544,544,544,544},
+                                 {140,138,544,544,544,544,544},
+                                 {140,139,544,544,544,544,544},
+                                 {140,140,544,544,544,142,544},
+                                 {140,141,544,544,544,544,544},
+                                 {140,142,544,544,544,544,544},
+                                 {141,138,544,544,544,544,544},
+                                 {141,139,544,544,544,544,544},
+                                 {141,140,544,544,544,142,544},
+                                 {141,141,544,544,544,142,544},
+                                 {141,142,544,544,544,544,544},
+                                 {142,138,544,544,544,544,544},
+                                 {142,139,544,544,544,544,544},
+                                 {142,140,544,544,544,544,544},
+                                 {142,141,544,544,544,544,544},
+                                 {142,142,544,544,544,142,142}
+                                };
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -239,9 +273,6 @@ QString Tokens;
 QString textoA;
 QString texto;
 void Token(int e){
-
-
-
     switch(e){
     case 100:
         //cout<<"Palabra reservada"<<endl;
@@ -602,6 +633,12 @@ void Errores(int e){
     case 543:
         errores+=textoA+" 543: Se esperaba un identificador o una coma\n";
         break;
+    case 544:
+        errores+="544: Error entre tipos\n";
+        break;
+    case 545:
+        errores+=textoA+" 545: Variable no declarada\n";
+        break;
     default:
         errores+="Revisa tu sintaxis quizas pusiste algo que no debe ir\n";
         break;
@@ -799,14 +836,10 @@ int Analiza(QString cadena){
             textoA.append(car);
             edo=105;
         }
-
         if(edo==105 && car==39){
             textoA.append(car);
             edo=105;
         }
-
-
-
         if(edo==100){
             edo=evaluaPR();
         }
@@ -849,9 +882,9 @@ int Analiza(QString cadena){
         edo=508;
     }
 
-
+    //Elimina lo que hay enfrente de una cadena
     int conta=0;
-    std::string cadenaStd2 = textoA.toStdString();
+
     for(int i=0;i<textoA.length();i++){
         char car=cadenaStd[i];
         if(car==' ' || car=='\t' || car==32 )
@@ -863,17 +896,11 @@ int Analiza(QString cadena){
         textoA.remove(0,conta);
     }
 
-
-
-
-
     if(edo>=100 && edo<=199){
         Token(edo);
     }else{
         Errores(edo);
     }
-
-
 
 return edo;
 }
@@ -1077,15 +1104,18 @@ int RelacionaGramatica(int estado){
 }
 
 void LlenarPilaProduccion(int fila){
-    for(int i=0;i<8;i++){
+    for(int i=0;i<15;i++){
         if(producciones[fila][i]!=0){
         pilaEjecucion.push(producciones[fila][i]);
         }
     }
 }
 
-QString evaluaElemento(int token){
-    switch(token){
+QString evaluaElemento(int elemento){
+    if(elemento>=700){
+        return "";
+    }
+    switch(elemento){
     case -1:
         return "ε";
     case 1:
@@ -1223,23 +1253,23 @@ QString evaluaElemento(int token){
         break;
     case 107:
         //cout<<"Suma"<<endl;
-        return "Operadorsuma";
+        return "+";
         break;
     case 108:
         //cout<<"Resta"<<endl;
-        return "Operadorresta";
+        return "-";
         break;
     case 109:
         //cout<<"Multiplicación"<<endl;
-        return "Operadormultipiliacación";
+        return "*";
         break;
     case 110:
         //cout<<"División"<<endl;
-        return "Operadordivisión";
+        return "/";
         break;
     case 111:
         //cout<<"Modulo"<<endl;
-        return "Operadormodulo";
+        return "%";
         break;
     case 112:
         //cout<<"Comentario"<<endl;
@@ -1255,11 +1285,11 @@ QString evaluaElemento(int token){
         break;
     case 115:
         //cout<<"Operador NOT"<<endl;
-        return "OperadorNOT";
+        return "!";
         break;
     case 116:
         //cout<<"Operador Diferente"<<endl;
-        return "Operadordiferente";
+        return "!=";
         break;
     case 117:
         //cout<<"Igual"<<endl;
@@ -1394,8 +1424,101 @@ void imprimePila(){
         QString ele=evaluaElemento(pilaEjecucion.at(i));
         pasosPila+=ele+" ";
     }
-    pasosPila+="\n";
+    pasosPila+="\n\n";
 }
+QString pilaOp;
+QString pilaT;
+QString pilaOper;
+void imprimePilaOperandos(){
+    for(int i=0;i<pilaOperandos.size();i++){
+        pilaOp+=pilaOperandos.at(i)+" ";
+    }
+    pilaOp+="\n\n";
+}
+void imprimePilaTipos(){
+    for(int i=0;i<pilaTipos.size();i++){
+        pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
+    }
+    pilaT+="\n\n";
+}
+void imprimePilaOperadores(){
+    for(int i=0;i<pilaOperadores.size();i++){
+        pilaOper+=evaluaElemento(pilaOperadores.at(i))+" ";
+    }
+    pilaOper+="\n\n";
+}
+int buscaTipo(){
+    int pos;
+    for(int i=0;i<pilaOperandosBusqueda.size();i++){
+        if(textoA.contains(pilaOperandosBusqueda.at(i))){
+            pos=i;
+            break;
+        }else{
+            pos=-1;
+        }
+    }
+    return pos;
+}
+void relacionaTiposOper(){
+    for(int i=0;i<25;i++){
+
+    }
+}
+void accionesSemanticayCodigoIntermedio(int accion){
+    switch(accion){
+        case 700:
+            pilaOperandos.push(textoA);
+            pilaOperandosBusqueda.push(textoA);
+            imprimePilaOperandos();
+            break;
+        case 701:
+            while(!pilaOperandos.isEmpty()){
+                pilaTiposBusqueda.push(edo);
+                pilaOperandos.pop();
+            }
+            imprimePilaOperandos();
+            break;
+        case 702:
+            if(edo>=102 && edo<=106){
+                if(edo==102){
+                    pilaTipos.push(138);
+                    imprimePilaTipos();
+                }
+                if(edo==103 || edo==104){
+                    pilaTipos.push(139);
+                    imprimePilaTipos();
+                }
+                if(edo==105){
+                    pilaTipos.push(140);
+                    imprimePilaTipos();
+                }
+                if(edo==106){
+                    pilaTipos.push(141);
+                    imprimePilaTipos();
+                }
+            }else{
+                int i=buscaTipo();
+                if(i==-1){
+                    Errores(545);
+                    pilaTipos.push(138);
+                    imprimePilaTipos();
+                    sinError=false;
+                }else{
+                    pilaTipos.push(pilaTiposBusqueda.at(i));
+                    imprimePilaTipos();
+            }
+            }
+        break;
+        case 703:
+            pilaOperadores.push(edo);
+            imprimePilaOperadores();
+            break;
+        case 704:
+            relacionaTiposOper();
+            break;
+    }
+}
+
 void ConstruyeGramatica(){
     int token=0,edoMP=0;
     int colMP=0,filaMP=0;
@@ -1406,7 +1529,7 @@ void ConstruyeGramatica(){
     pilaEjecucion.push(1);
     bool quieroToken=true,llena=true;
     imprimePila();
-    bool sinError=true;
+    sinError=true;
     while(!pilaEjecucion.empty()){
 
         if(quieroToken){
@@ -1430,6 +1553,10 @@ void ConstruyeGramatica(){
             quieroToken=true;
             }
             imprimePila();
+            if(pilaEjecucion.top()>=700){
+                accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
+                pilaEjecucion.pop();
+            }
             }else{
                 QString tr=evaluaElemento(token);
                 QString tp=evaluaElemento(pilaEjecucion.top());
@@ -1483,18 +1610,30 @@ void MainWindow::on_pushButton_clicked()
     Tokens="";
     errores="";
     pasosPila="";
+    pilaOp="";
+    pilaT="";
+    pilaOper="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
+    ui->pilaOperandos->setPlainText("");
+    ui->pilaTipos->setPlainText("");
+    ui->pilaOperadores->setPlainText("");
+    pilaTipos.clear();
+    pilaOperandosBusqueda.clear();
+    pilaTiposBusqueda.clear();
+    pilaOperadores.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
     if(errores!=""){
-        QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos");
+        QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos o semánticos");
     }
     ui->Token->appendPlainText(Tokens);
     ui->Error->appendPlainText(errores);
     ui->Token_2->appendPlainText(pasosPila);
-
+    ui->pilaOperandos->appendPlainText(pilaOp);
+    ui->pilaTipos->appendPlainText(pilaT);
+    ui->pilaOperadores->appendPlainText(pilaOper);
 }
 
 void MainWindow::on_pushButton_2_clicked()
