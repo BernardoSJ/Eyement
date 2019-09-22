@@ -95,7 +95,7 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {141},//string
                                 {142},//boolean
                                 {-1},//ε
-                                {8,124,28},//ESTATUTOS ; EST_ASIG
+                                {8,704,124,28},//ESTATUTOS ; EST_ASIG
                                 {8,124,9},//ESTATUTOS ; EST_IF
                                 {8,124,11},//ESTATUTOS ; EST_WHILE
                                 {8,124,12},//ESTATUTOS ; EST_FOR
@@ -119,11 +119,11 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {20,21},//H EXPR5
                                 {-1},//ε
                                 {21,26},//EXPR5 OPREL
-                                {22,23},//I (Evaluar operadores y evaluar tipos) TERM
+                                {22,23},//I TERM
                                 {-1},//ε
                                 {21,703,107},//EXPR5 (insertar pila de operadores el operador recibido) +
                                 {21,703,108},//EXPR5 (insertar pila de operadores el operador recibido) -
-                                {24,25},//J (Evaluar operadores y evaluar tipos) FACT
+                                {24,25},//J FACT
                                 {-1},//ε
                                 {23,703,109},//TERM (insertar pila de operadores el operador recibido) *
                                 {23,703,110},//TERM (insertar pila de operadores el operador recibido) /
@@ -134,13 +134,13 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {702,104},//(Acción insertar en la pila de tipos el identificador recibido) ctenotacioncientifica
                                 {702,105},//(Acción insertar en la pila de tipos el identificador recibido) ctecaracter
                                 {702,106},//(Acción insertar en la pila de tipos el identificador recibido) ctestring
-                                {127,13,126},// ) EXPR (
-                                {117},//==
-                                {116},//!=
-                                {120},//<
-                                {121},//<=
-                                {118},//>
-                                {119},//>=
+                                {706,127,13,705,126},// ) EXPR (
+                                {703,117},//==
+                                {703,116},//!=
+                                {703,120},//<
+                                {703,121},//<=
+                                {703,118},//>
+                                {703,119},//>=
                                 {150},//enter
                                 {13,703,122,702,101},//EXPR (insertar pila de operadores el operador recibido) = (Acción insertar en la pila de tipos el identificador recibido) id
                                 {30,126,151},//K ( write
@@ -1118,6 +1118,8 @@ QString evaluaElemento(int elemento){
     switch(elemento){
     case -1:
         return "ε";
+    case -2:
+        return "MFF";
     case 1:
         return "PROGRAM";
         break;
@@ -1459,8 +1461,73 @@ int buscaTipo(){
     }
     return pos;
 }
+int relacionaMatrizTipos(int edo){
+    if(edo>=107 && edo<=109)
+        return 2;
+    if(edo==110)
+        return 3;
+    if(edo==111)
+        return 4;
+    if(edo>=116 && edo<=121)
+        return 5;
+    if(edo>=113 && edo<=115)
+        return 6;
+}
 void relacionaTiposOper(){
-    for(int i=0;i<25;i++){
+    int op1=pilaTipos.top();
+    int op2=pilaTipos.at(pilaTipos.size()-2);
+    if((pilaOperadores.top()==122 && pilaEjecucion.top()==704)){
+        if(op1==op2){
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+        }else{
+            Errores(544);
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            sinError=false;
+        }
+    }else if(pilaOperadores.top()>=107 && pilaOperadores.top()<=111){
+        int fila=0;
+        for(int i=0;i<25;i++){
+            if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
+                fila=i;
+            }
+        }
+
+        int columna=relacionaMatrizTipos(pilaOperadores.top());
+        int supuesto=matrizDeTipos[fila][columna];
+        if(supuesto<500){
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+        }else{
+            supuesto=op1;
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            sinError=false;
+        }
+    }else if(pilaOperadores.top()>=116 && pilaOperadores.top()<=121){
+
+    }else if(pilaOperadores.top()>=113 && pilaOperadores.top()<=115){
 
     }
 }
@@ -1508,13 +1575,21 @@ void accionesSemanticayCodigoIntermedio(int accion){
                     imprimePilaTipos();
             }
             }
-        break;
+            break;
         case 703:
             pilaOperadores.push(edo);
             imprimePilaOperadores();
             break;
         case 704:
             relacionaTiposOper();
+            break;
+        case 705:
+            pilaOperadores.push(-2);
+            imprimePilaOperadores();
+            break;
+        case 706:
+            pilaOperadores.pop();
+            imprimePilaOperadores();
             break;
     }
 }
@@ -1548,15 +1623,18 @@ void ConstruyeGramatica(){
         }
         if(pilaEjecucion.top()>=100){
             if(pilaEjecucion.top()==token){
-            pilaEjecucion.pop();
-            if(texto!=""){
-            quieroToken=true;
-            }
-            imprimePila();
-            if(pilaEjecucion.top()>=700){
-                accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                 pilaEjecucion.pop();
-            }
+                if(texto!=""){
+                    quieroToken=true;
+                }
+                imprimePila();
+                if(pilaEjecucion.top()>=700 && pilaEjecucion.top()<800){
+                    accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
+                    pilaEjecucion.pop();
+                }
+                if(token>=101 && token<=106 && !pilaOperadores.empty()){
+                    accionesSemanticayCodigoIntermedio(704);
+                }
             }else{
                 QString tr=evaluaElemento(token);
                 QString tp=evaluaElemento(pilaEjecucion.top());
