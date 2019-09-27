@@ -1532,10 +1532,25 @@ void relacionaTiposOper(){
     }
 }
 void accionesSemanticayCodigoIntermedio(int accion){
+    bool existeOperando=false;
     switch(accion){
         case 700:
             pilaOperandos.push(textoA);
             pilaOperandosBusqueda.push(textoA);
+            for(int i=0;i<pilaOperandosBusqueda.size();i++){
+                if(pilaOperandosBusqueda.size()>1){
+                    if(pilaOperandosBusqueda.at(i).contains(pilaOperandos.top()))
+                        existeOperando=true;
+                        break;
+                }
+            }
+            if(existeOperando){
+                sinError=false;
+                pilaOperandos.pop();
+                pilaOperandosBusqueda.pop();
+                errores+=textoA+" Variable ya definida\n";
+                existeOperando=false;
+            }
             imprimePilaOperandos();
             break;
         case 701:
