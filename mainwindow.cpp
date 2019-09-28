@@ -1450,13 +1450,13 @@ void imprimePilaOperadores(){
     pilaOper+="\n\n";
 }
 int buscaTipo(){
-    int pos;
-    for(int i=0;i<pilaOperandosBusqueda.size();i++){
-        if(textoA.contains(pilaOperandosBusqueda.at(i))){
-            pos=i;
-            break;
-        }else{
-            pos=-1;
+    int pos=-1;
+    if(!pilaOperandosBusqueda.empty()){
+        for(int i=0;i<pilaOperandosBusqueda.size();i++){
+            if(textoA.contains(pilaOperandosBusqueda.at(i))){
+                pos=i;
+                break;
+            }
         }
     }
     return pos;
@@ -1497,6 +1497,7 @@ void relacionaTiposOper(){
         for(int i=0;i<25;i++){
             if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
                 fila=i;
+                break;
             }
         }
         int columna=relacionaMatrizTipos(pilaOperadores.top());
@@ -1504,6 +1505,7 @@ void relacionaTiposOper(){
         if(supuesto<500){
             imprimeYLimpiaPilas();
         }else{
+            Errores(544);
             supuesto=op1;
             pilaTipos.pop();
             imprimePilaTipos();
@@ -1520,6 +1522,7 @@ void relacionaTiposOper(){
         for(int i=0;i<25;i++){
             if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
                 fila=i;
+                break;
             }
         }
         int columna=relacionaMatrizTipos(pilaOperadores.top());
@@ -1527,6 +1530,7 @@ void relacionaTiposOper(){
         if(supuesto<500){
             imprimeYLimpiaPilas();
         }else{
+            Errores(544);
             supuesto=op1;
             pilaTipos.pop();
             imprimePilaTipos();
@@ -1543,6 +1547,7 @@ void relacionaTiposOper(){
         for(int i=0;i<25;i++){
             if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
                 fila=i;
+                break;
             }
         }
         int columna=relacionaMatrizTipos(pilaOperadores.top());
@@ -1550,6 +1555,7 @@ void relacionaTiposOper(){
         if(supuesto<500){
             imprimeYLimpiaPilas();
         }else{
+            Errores(544);
             supuesto=op1;
             pilaTipos.pop();
             imprimePilaTipos();
