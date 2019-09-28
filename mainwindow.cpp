@@ -109,10 +109,10 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {148,8,127,13,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
-                                {13,114},//EXPR ||
+                                {13,703,114},//EXPR ||
                                 {16,17},// F EXPR3
                                 {-1},//ε
-                                {15,113},//EXPR2 &&
+                                {15,703,113},//EXPR2 &&
                                 {18},//G
                                 {19},//EXPR4
                                 {19,115},//EXPR4 !
@@ -1473,25 +1473,23 @@ int relacionaMatrizTipos(int edo){
     if(edo>=113 && edo<=115)
         return 6;
 }
+void imprimeYLimpiaPilas(){
+    pilaTipos.pop();
+    imprimePilaTipos();
+    pilaTipos.pop();
+    imprimePilaTipos();
+    pilaOperadores.pop();
+    imprimePilaOperadores();
+}
 void relacionaTiposOper(){
     int op1=pilaTipos.top();
     int op2=pilaTipos.at(pilaTipos.size()-2);
     if((pilaOperadores.top()==122 && pilaEjecucion.top()==704)){
         if(op1==op2){
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaOperadores.pop();
-            imprimePilaOperadores();
+            imprimeYLimpiaPilas();
         }else{
             Errores(544);
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaOperadores.pop();
-            imprimePilaOperadores();
+            imprimeYLimpiaPilas();
             sinError=false;
         }
     }else if(pilaOperadores.top()>=107 && pilaOperadores.top()<=111){
@@ -1501,18 +1499,10 @@ void relacionaTiposOper(){
                 fila=i;
             }
         }
-
         int columna=relacionaMatrizTipos(pilaOperadores.top());
         int supuesto=matrizDeTipos[fila][columna];
         if(supuesto<500){
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaTipos.pop();
-            imprimePilaTipos();
-            pilaTipos.push(supuesto);
-            imprimePilaTipos();
-            pilaOperadores.pop();
-            imprimePilaOperadores();
+            imprimeYLimpiaPilas();
         }else{
             supuesto=op1;
             pilaTipos.pop();
@@ -1526,9 +1516,51 @@ void relacionaTiposOper(){
             sinError=false;
         }
     }else if(pilaOperadores.top()>=116 && pilaOperadores.top()<=121){
-
+        int fila=0;
+        for(int i=0;i<25;i++){
+            if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
+                fila=i;
+            }
+        }
+        int columna=relacionaMatrizTipos(pilaOperadores.top());
+        int supuesto=matrizDeTipos[fila][columna];
+        if(supuesto<500){
+            imprimeYLimpiaPilas();
+        }else{
+            supuesto=op1;
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            sinError=false;
+        }
     }else if(pilaOperadores.top()>=113 && pilaOperadores.top()<=115){
-
+        int fila=0;
+        for(int i=0;i<25;i++){
+            if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
+                fila=i;
+            }
+        }
+        int columna=relacionaMatrizTipos(pilaOperadores.top());
+        int supuesto=matrizDeTipos[fila][columna];
+        if(supuesto<500){
+            imprimeYLimpiaPilas();
+        }else{
+            supuesto=op1;
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.pop();
+            imprimePilaTipos();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            sinError=false;
+        }
     }
 }
 void accionesSemanticayCodigoIntermedio(int accion){
@@ -1663,16 +1695,6 @@ void ConstruyeGramatica(){
                 sinError=false;
                 pilaEjecucion.pop();
                 imprimePila();
-                /*
-                 *This code didn´t work as I (BSJ) would have wanted so I thought in other way to do the right analysis and so it worked as
-                 * you can see above
-                 for(int i=0;i<49;i++){
-                    if(matrizPredictiva[pilaEjecucion.top()][i]<500){
-                        pilaEjecucion.pop();
-                        pilaEjecucion.push(matrizPredictiva[pilaEjecucion.top()][i]);
-                        break;
-                    }
-                }*/
             }else{
                 if(pilaEjecucion.top()>0 && pilaEjecucion.top()<=34){
                     llena=true;
