@@ -8,6 +8,24 @@
 #include <QStack>
 
 using namespace std;
+//Clase en donde se guarda la información de los cuadruplos
+class cuadruplo{
+    public:
+        QString n;
+        QString oper;
+        QString op1;
+        QString op2;
+        QString res;
+        cuadruplo(QString,QString,QString,QString,QString);
+};
+
+cuadruplo::cuadruplo(QString _n,QString _oper,QString _op1,QString _op2,QString _res){
+    n=_n;
+    oper=_oper;
+    op1=_op1;
+    op2=_op2;
+    res=_res;
+}
 
 static QStack<int> pilaEjecucion;//Pila análisis sintactico
 static QStack<QString> pilaOperandos;//Pila de operandos
@@ -15,9 +33,13 @@ static QStack<QString> pilaOperandosBusqueda;//Pila para facilitar la busqueda d
 static QStack<int> pilaTipos;//Pila de tipos para los identificadores
 static QStack<int> pilaTiposBusqueda;//Pila para los tipos
 static QStack<int> pilaOperadores;//Pila de operadores que se ingresan
-static int edo;
+static QStack<int> pilaSaltos;
+static int edo;//Estado del analizado léxico
 static bool sinError; //Varibale para medir si hay error
+static QList<cuadruplo> cuadruplos;
 
+static int contCuadruplo; //Variable que cuenta el valor de los cuadruplos
+static int contRes;//Variable que cuenta el valor de res
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
                     {2,100,100,100,100,100,100,100,100,100,2,1,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,3,100,100,100},
                     {2,22,101,101,101,101,101,101,101,101,2,2,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,3,101,101,101},
@@ -188,12 +210,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Token->setReadOnly(true);
     ui->Error->setReadOnly(true);
     ui->Token_2->setReadOnly(true);
+    ui->tablaCuadruplos->setColumnCount(5);
+    QStringList titulos;
+    titulos<<"#"<<"oper"<<"op1"<<"op2"<<"res";
+    ui->tablaCuadruplos->setHorizontalHeaderLabels(titulos);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
+
 
 int Relaciona(char c){
    int valor;
@@ -1478,8 +1505,21 @@ void imprimeYLimpiaPilas(){
     imprimePilaTipos();
     pilaTipos.pop();
     imprimePilaTipos();
-    pilaOperadores.pop();
-    imprimePilaOperadores();
+}
+
+//LLenar la tabla con cuadruplos
+void MainWindow::LlenarCuadruplo(){
+    int con=0;
+    while(con<cuadruplos.size()){
+        ui->tablaCuadruplos->insertRow(ui->tablaCuadruplos->rowCount());
+        int fila=ui->tablaCuadruplos->rowCount()-1;
+        ui->tablaCuadruplos->setItem(fila,0,new QTableWidgetItem(cuadruplos.at(con).n));
+        ui->tablaCuadruplos->setItem(fila,1,new QTableWidgetItem(cuadruplos.at(con).oper));
+        ui->tablaCuadruplos->setItem(fila,2,new QTableWidgetItem(cuadruplos.at(con).op1));
+        ui->tablaCuadruplos->setItem(fila,3,new QTableWidgetItem(cuadruplos.at(con).op2));
+        ui->tablaCuadruplos->setItem(fila,4,new QTableWidgetItem(cuadruplos.at(con).res));
+        con++;
+    }
 }
 void relacionaTiposOper(){
     int op1=pilaTipos.top();
@@ -1487,9 +1527,33 @@ void relacionaTiposOper(){
     if((pilaOperadores.top()==122 && pilaEjecucion.top()==704)){
         if(op1==op2){
             imprimeYLimpiaPilas();
+            QString oper=evaluaElemento(pilaOperadores.top());
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            QString op2="";
+            QString res=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString op1=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+            cuadruplos.append(obj);
         }else{
             Errores(544);
             imprimeYLimpiaPilas();
+            QString oper=evaluaElemento(pilaOperadores.top());
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            QString op2="";
+            QString res=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString op1=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+            cuadruplos.append(obj);
             sinError=false;
         }
     }else if(pilaOperadores.top()>=107 && pilaOperadores.top()<=111){
@@ -1504,6 +1568,21 @@ void relacionaTiposOper(){
         int supuesto=matrizDeTipos[fila][columna];
         if(supuesto<500){
             imprimeYLimpiaPilas();
+            pilaTipos.push(supuesto);
+            QString oper=evaluaElemento(pilaOperadores.top());
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            QString op2=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString op1=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString res="R"+QString::number(++contRes);
+            pilaOperandos.push(res);
+            imprimePilaOperandos();
+            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+            cuadruplos.append(obj);
         }else{
             Errores(544);
             supuesto=op1;
@@ -1513,8 +1592,20 @@ void relacionaTiposOper(){
             imprimePilaTipos();
             pilaTipos.push(supuesto);
             imprimePilaTipos();
+            QString oper=evaluaElemento(pilaOperadores.top());
             pilaOperadores.pop();
             imprimePilaOperadores();
+            QString op2=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString op1=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            QString res="R"+QString::number(++contRes);
+            pilaOperandos.push(res);
+            imprimePilaOperandos();
+            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+            cuadruplos.append(obj);
             sinError=false;
         }
     }else if(pilaOperadores.top()>=116 && pilaOperadores.top()<=121){
@@ -1529,6 +1620,8 @@ void relacionaTiposOper(){
         int supuesto=matrizDeTipos[fila][columna];
         if(supuesto<500){
             imprimeYLimpiaPilas();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
         }else{
             Errores(544);
             supuesto=op1;
@@ -1554,6 +1647,8 @@ void relacionaTiposOper(){
         int supuesto=matrizDeTipos[fila][columna];
         if(supuesto<500){
             imprimeYLimpiaPilas();
+            pilaTipos.push(supuesto);
+            imprimePilaTipos();
         }else{
             Errores(544);
             supuesto=op1;
@@ -1685,8 +1780,12 @@ void ConstruyeGramatica(){
                     accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                     pilaEjecucion.pop();
                 }
-                if(token>=101 && token<=106 && !pilaOperadores.empty()){
-                    accionesSemanticayCodigoIntermedio(704);
+                if(token>=101 && token<=106){
+                    pilaOperandos.push(textoA);
+                    if(!pilaOperadores.empty()){
+                        imprimePilaOperandos();
+                        accionesSemanticayCodigoIntermedio(704);
+                    }
                 }
             }else{
                 QString tr=evaluaElemento(token);
@@ -1728,6 +1827,10 @@ void ConstruyeGramatica(){
 
 void MainWindow::on_pushButton_clicked()
 {
+    ui->tablaCuadruplos->setRowCount(0);
+    cuadruplos.clear();
+    contCuadruplo=0;
+    contRes=0;
     Tokens="";
     errores="";
     pasosPila="";
@@ -1755,6 +1858,7 @@ void MainWindow::on_pushButton_clicked()
     ui->pilaOperandos->appendPlainText(pilaOp);
     ui->pilaTipos->appendPlainText(pilaT);
     ui->pilaOperadores->appendPlainText(pilaOper);
+    LlenarCuadruplo();
 }
 
 void MainWindow::on_pushButton_2_clicked()
