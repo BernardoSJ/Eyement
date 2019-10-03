@@ -1721,8 +1721,9 @@ void accionesSemanticayCodigoIntermedio(int accion){
                 }else{
                     pilaTipos.push(pilaTiposBusqueda.at(i));
                     imprimePilaTipos();
+            }   
             }
-            }
+            pilaOperandos.push(textoA);
             break;
         case 703:
             pilaOperadores.push(edo);
@@ -1781,7 +1782,6 @@ void ConstruyeGramatica(){
                     pilaEjecucion.pop();
                 }
                 if(token>=101 && token<=106){
-                    pilaOperandos.push(textoA);
                     if(!pilaOperadores.empty()){
                         imprimePilaOperandos();
                         accionesSemanticayCodigoIntermedio(704);
