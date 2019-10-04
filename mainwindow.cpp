@@ -1582,6 +1582,8 @@ void relacionaTiposOper(){
             pilaOperandos.push(res);
             imprimePilaOperandos();
             cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+            //cuadruplo obj(QString::number(++contCuadruplo),"SF",pilaOperandos.yop(),"","");
+            //pilaSatos.push(contCuadruplos);
             cuadruplos.append(obj);
         }else{
             Errores(544);
@@ -1740,6 +1742,20 @@ void accionesSemanticayCodigoIntermedio(int accion){
             pilaOperadores.pop();
             imprimePilaOperadores();
             break;
+    case 707://Accion salto en falso
+        //Logica de la accion: ºpila_operandos.push()y pila_saltos(contcuadruplos).
+        break;
+    case 708:
+        //Se hace un salto incondicional, tope_saltos(contcuadruplos+1) y pila:saltos(pos_actual)
+        break;
+     case 709:
+        //Rellenar tope_saltos(ContCuadruplo+1)
+
+        break;
+     case 710:
+        //Sacar Marca de fondo falso, pila:operadores.pop()
+        break;
+
     }
 }
 
