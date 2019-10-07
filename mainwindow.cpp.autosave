@@ -118,7 +118,7 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {142},//boolean
                                 {-1},//ε
                                 {8,711,124,28},//ESTATUTOS ; EST_ASIG
-                                {8,706,124,9},//ESTATUTOS ; EST_IF
+                                {8,124,9},//ESTATUTOS ; EST_IF
                                 {8,124,11},//ESTATUTOS ; EST_WHILE
                                 {8,124,12},//ESTATUTOS ; EST_FOR
                                 {8,124,32},//ESTATUTOS ; EST_READ
