@@ -117,14 +117,14 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {141},//string
                                 {142},//boolean
                                 {-1},//ε
-                                {8,704,124,28},//ESTATUTOS ; EST_ASIG
+                                {8,711,124,28},//ESTATUTOS ; EST_ASIG
                                 {8,124,9},//ESTATUTOS ; EST_IF
                                 {8,124,11},//ESTATUTOS ; EST_WHILE
                                 {8,124,12},//ESTATUTOS ; EST_FOR
                                 {8,124,32},//ESTATUTOS ; EST_READ
                                 {8,124,29},//ESTATUTOS ; EST_WRITE
                                 {8,124,27},//ESTATUTOS ; EST_ENTER
-                                {10,8,127,13,126,143},//D ESTATUTOS ) EXPR ( if
+                                {10,8,127,13,705,126,143},//D ESTATUTOS ) EXPR ( if
                                 {144},//endif
                                 {144,8,145},//endif ESTATUTOS else
                                 {146,8,127,13,126,147},//endwhile ESTATUTOS ) EXPR ( while
@@ -1524,39 +1524,7 @@ void MainWindow::LlenarCuadruplo(){
 void relacionaTiposOper(){
     int op1=pilaTipos.top();
     int op2=pilaTipos.at(pilaTipos.size()-2);
-    if((pilaOperadores.top()==122 && pilaEjecucion.top()==704)){
-        if(op1==op2){
-            imprimeYLimpiaPilas();
-            QString oper=evaluaElemento(pilaOperadores.top());
-            pilaOperadores.pop();
-            imprimePilaOperadores();
-            QString op2="";
-            QString res=pilaOperandos.top();
-            pilaOperandos.pop();
-            imprimePilaOperandos();
-            QString op1=pilaOperandos.top();
-            pilaOperandos.pop();
-            imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
-        }else{
-            Errores(544);
-            imprimeYLimpiaPilas();
-            QString oper=evaluaElemento(pilaOperadores.top());
-            pilaOperadores.pop();
-            imprimePilaOperadores();
-            QString op2="";
-            QString res=pilaOperandos.top();
-            pilaOperandos.pop();
-            imprimePilaOperandos();
-            QString op1=pilaOperandos.top();
-            pilaOperandos.pop();
-            imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
-            sinError=false;
-        }
-    }else if(pilaOperadores.top()>=107 && pilaOperadores.top()<=111){
+    if(pilaOperadores.top()>=107 && pilaOperadores.top()<=111){
         int fila=0;
         for(int i=0;i<25;i++){
             if(matrizDeTipos[i][0]==op1 && matrizDeTipos[i][1]==op2){
@@ -1742,19 +1710,56 @@ void accionesSemanticayCodigoIntermedio(int accion){
             pilaOperadores.pop();
             imprimePilaOperadores();
             break;
-    case 707://Accion salto en falso
-        //Logica de la accion: ºpila_operandos.push()y pila_saltos(contcuadruplos).
-        break;
-    case 708:
-        //Se hace un salto incondicional, tope_saltos(contcuadruplos+1) y pila:saltos(pos_actual)
-        break;
-     case 709:
-        //Rellenar tope_saltos(ContCuadruplo+1)
+        case 707://Accion salto en falso
+            //Logica de la accion: ºpila_operandos.push()y pila_saltos(contcuadruplos).
+            break;
+        case 708:
+            //Se hace un salto incondicional, tope_saltos(contcuadruplos+1) y pila:saltos(pos_actual)
+            break;
+         case 709:
+            //Rellenar tope_saltos(ContCuadruplo+1)
 
-        break;
-     case 710:
-        //Sacar Marca de fondo falso, pila:operadores.pop()
-        break;
+            break;
+        case 710:
+            //Sacar Marca de fondo falso, pila:operadores.pop()
+            break;
+        case 711://Formar cuadruplo de asignación
+            int op1=pilaTipos.top();
+            int op2=pilaTipos.at(pilaTipos.size()-2);
+            if((pilaOperadores.top()==122)){
+                    if(op1==op2){
+                        imprimeYLimpiaPilas();
+                        QString oper=evaluaElemento(pilaOperadores.top());
+                        pilaOperadores.pop();
+                        imprimePilaOperadores();
+                        QString op2="";
+                        QString res=pilaOperandos.top();
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        QString op1=pilaOperandos.top();
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+                        cuadruplos.append(obj);
+                    }else{
+                        Errores(544);
+                        imprimeYLimpiaPilas();
+                        QString oper=evaluaElemento(pilaOperadores.top());
+                        pilaOperadores.pop();
+                        imprimePilaOperadores();
+                        QString op2="";
+                        QString res=pilaOperandos.top();
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        QString op1=pilaOperandos.top();
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
+                        cuadruplos.append(obj);
+                        sinError=false;
+                    }
+            }
+            break;
 
     }
 }
@@ -1797,7 +1802,7 @@ void ConstruyeGramatica(){
                     accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                     pilaEjecucion.pop();
                 }
-                if(token>=101 && token<=106){
+                if((token>=101 && token<=106) || token==127){
                     if(!pilaOperadores.empty()){
                         imprimePilaOperandos();
                         accionesSemanticayCodigoIntermedio(704);
