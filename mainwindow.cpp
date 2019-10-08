@@ -63,7 +63,9 @@ static QStack<int> pilaSaltos;
 static int edo;//Estado del analizado léxico
 static bool sinError; //Varibale para medir si hay error
 static QList<QSharedPointer<cuadruplo>> cuadruplos;
-
+static int contadorRaW;//Variable que controla los elementos del read, write
+static bool estaPresenteRead=false;
+static bool estaPresenteWrite=false;
 static int contCuadruplo; //Variable que cuenta el valor de los cuadruplos
 static int contRes;//Variable que cuenta el valor de res
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
@@ -153,7 +155,7 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {709,10,8,707,127,13,126,143},//D ESTATUTOS ) EXPR ( if
                                 {144},//endif
                                 {144,8,708,145},//endif ESTATUTOS else
-                                {146,8,127,13,126,147},//endwhile ESTATUTOS ) EXPR ( while
+                                {714,146,8,707,127,13,715,126,147},//endwhile ESTATUTOS ) EXPR ( while
                                 {714,148,8,713,127,13,712,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
@@ -189,14 +191,14 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {703,121},//<=
                                 {703,118},//>
                                 {703,119},//>=
-                                {150},//enter
+                                {716,150},//enter
                                 {13,703,122,702,101},//EXPR (insertar pila de operadores el operador recibido) = (Acción insertar en la pila de tipos el identificador recibido) id
-                                {30,126,151},//K ( write
+                                {717,30,126,151},//K ( write
                                 {31,13},//L EXPR
                                 {127},// )
                                 {30,130},// K ,
-                                {33,126,152},//M ( read
-                                {34,101},//N id
+                                {717,33,126,152},//M ( read
+                                {34,702,101},//N id
                                 {127},// )
                                 {33,130}//M ,
                                 };
@@ -1780,6 +1782,10 @@ void accionesSemanticayCodigoIntermedio(int accion){
             }   
             }
             pilaOperandos.push(textoA);
+            if(estaPresenteRead || estaPresenteWrite){
+                imprimePilaOperandos();
+                contadorRaW++;
+            }
             break;
         case 703:
             pilaOperadores.push(edo);
@@ -1831,7 +1837,37 @@ void accionesSemanticayCodigoIntermedio(int accion){
             }
             pilaSaltos.pop();
             imprimePilaSaltos();
+            break;
+         case 717://Concatena lo necesario para estatutos write y read
+            for(int i=0;i<contadorRaW;i++){
+                if(estaPresenteRead){
+                   oper="read";
+                }
+                if(estaPresenteWrite){
+                   oper="write";
+                }
+                formaCuadruplo(QString::number(++contCuadruplo),oper,"","",pilaOperandos.at(i));
 
+            }
+
+            while(!pilaOperandos.isEmpty()){
+                pilaOperandos.remove(0);
+                imprimePilaOperandos();
+            }
+            contadorRaW=0;
+            estaPresenteRead=false;
+            estaPresenteWrite=false;
+            break;
+        case 716://Agrega el enter, forma cuadruplo y elimina el tope de la pila
+            pilaOperadores.push(150);
+            imprimePilaOperadores();
+            formaCuadruplo(QString::number(++contCuadruplo),"enter","","","");
+            pilaOperadores.pop();
+            imprimePilaOperadores();
+            break;
+        case 715://Guardar siguiente cuadruplo para el ciclo while
+            pilaSaltos.push(contCuadruplo+1);
+            imprimePilaSaltos();
             break;
         case 714://Llenar top-1 con contador de cuadruplos,llenar top de la pila de saltos con contadorcuadruplos+1 y limpiar pilas
             oper="SI";
@@ -1946,9 +1982,12 @@ void ConstruyeGramatica(){
                     accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                     pilaEjecucion.pop();
                 }
-                /*if(token==126){
-                    accionesSemanticayCodigoIntermedio(705);
-                }*/
+                if(token==151){
+                    estaPresenteWrite=true;
+                }
+                if(token==152){
+                    estaPresenteRead=true;
+                }
                 if((token>=101 && token<=106) || token==127){
                     if(!pilaOperadores.empty()){
                         imprimePilaOperandos();
