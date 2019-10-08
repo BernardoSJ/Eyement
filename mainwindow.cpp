@@ -154,7 +154,7 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {144},//endif
                                 {144,8,708,145},//endif ESTATUTOS else
                                 {146,8,127,13,126,147},//endwhile ESTATUTOS ) EXPR ( while
-                                {148,8,127,13,711,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
+                                {714,148,8,713,127,13,712,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
                                 {13,703,114},//EXPR ||
@@ -579,7 +579,7 @@ void imprimePilaOperadores(){
 }
 void imprimePilaSaltos(){
     for(int i=0;i<pilaSaltos.size();i++)
-        pilaSal+=QString::number(pilaSaltos.at(i));
+        pilaSal+=QString::number(pilaSaltos.at(i))+" ";
     pilaSal+="\n\n";
 }
 
@@ -1833,6 +1833,39 @@ void accionesSemanticayCodigoIntermedio(int accion){
             imprimePilaSaltos();
 
             break;
+        case 714://Llenar top-1 con contador de cuadruplos,llenar top de la pila de saltos con contadorcuadruplos+1 y limpiar pilas
+            oper="SI";
+            formaCuadruplo(QString::number(++contCuadruplo),oper,"","",QString::number(pilaSaltos.at(pilaSaltos.size()-2)));
+            for(int i=0;i<cuadruplos.size();i++){
+                if(cuadruplos.at(i)->getN()==QString::number(pilaSaltos.top())){
+                    cuadruplos.at(i)->setRes(QString::number(contCuadruplo+1));
+                    break;
+                }
+            }
+            pilaSaltos.pop();
+            imprimePilaSaltos();
+            pilaSaltos.pop();
+            imprimePilaSaltos();
+            break;
+        case 713:
+            if(cuadruplos.at(cuadruplos.size()-1)->getOper()=="<" || cuadruplos.at(cuadruplos.size()-1)->getOper()=="<="){
+                oper="SF";
+                op1=pilaOperandos.top();
+                pilaOperandos.pop();
+                imprimePilaOperandos();
+            }else{
+                oper="SV";
+                op1=pilaOperandos.top();
+                pilaOperandos.pop();
+                imprimePilaOperandos();
+            }
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,"","");
+            pilaSaltos.append(contCuadruplo);
+            imprimePilaSaltos();
+            break;
+        case 712://Guardar siguiente cuadruplo para el ciclo for
+            pilaSaltos.push(contCuadruplo+2);
+            imprimePilaSaltos();
         case 711://Formar cuadruplo de asignación
             int op1=pilaTipos.top();
             int op2=pilaTipos.at(pilaTipos.size()-2);
@@ -1870,6 +1903,7 @@ void accionesSemanticayCodigoIntermedio(int accion){
                     }
             }
             break;
+
 
     }
 }
