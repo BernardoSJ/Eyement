@@ -1919,7 +1919,6 @@ void accionesSemanticayCodigoIntermedio(int accion){
                         pilaOperandos.pop();
                         imprimePilaOperandos();
                         formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
-
                     }else{
                         Errores(544);
                         imprimeYLimpiaPilas();
@@ -1934,7 +1933,6 @@ void accionesSemanticayCodigoIntermedio(int accion){
                         pilaOperandos.pop();
                         imprimePilaOperandos();
                         formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
-
                         sinError=false;
                     }
             }
@@ -2094,7 +2092,6 @@ void MainWindow::on_pushButton_2_clicked()
        inputFile.close();
     }
 
-
 }
 
 }
@@ -2104,9 +2101,29 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_3_clicked()
 {
     ui->textoAnalizar->setPlainText("");
+    ui->tablaCuadruplos->setRowCount(0);
+    cuadruplos.clear();
+    contCuadruplo=0;
+    contRes=0;
+    Tokens="";
+    errores="";
+    pasosPila="";
+    pilaOp="";
+    pilaT="";
+    pilaOper="";
+    pilaSal="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
+    ui->pilaOperandos->setPlainText("");
+    ui->pilaTipos->setPlainText("");
+    ui->pilaOperadores->setPlainText("");
+    ui->pilaSaltos->setPlainText("");
+    pilaSaltos.clear();
+    pilaTipos.clear();
+    pilaOperandosBusqueda.clear();
+    pilaTiposBusqueda.clear();
+    pilaOperadores.clear();
 }
 
 void MainWindow::on_pushButton_4_clicked()
