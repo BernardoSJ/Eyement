@@ -10,6 +10,7 @@
 using namespace std;
 //Clase en donde se guarda la información de los cuadruplos
 class cuadruplo{
+
     public:
         QString n;
         QString oper;
@@ -17,8 +18,32 @@ class cuadruplo{
         QString op2;
         QString res;
         cuadruplo(QString,QString,QString,QString,QString);
-};
+        QString getN();
+        QString getOper();
+        QString getOp1();
+        QString getOp2();
+        QString getRes();
+        void setRes(QString r);
 
+};
+QString cuadruplo::getN(){
+    return n;
+}
+QString cuadruplo::getOper(){
+    return oper;
+}
+QString cuadruplo::getOp1(){
+    return op1;
+}
+QString cuadruplo::getOp2(){
+    return op2;
+}
+QString cuadruplo::getRes(){
+    return res;
+}
+void cuadruplo::setRes(QString _r){
+    res=_r;
+}
 cuadruplo::cuadruplo(QString _n,QString _oper,QString _op1,QString _op2,QString _res){
     n=_n;
     oper=_oper;
@@ -26,6 +51,7 @@ cuadruplo::cuadruplo(QString _n,QString _oper,QString _op1,QString _op2,QString 
     op2=_op2;
     res=_res;
 }
+
 
 static QStack<int> pilaEjecucion;//Pila análisis sintactico
 static QStack<QString> pilaOperandos;//Pila de operandos
@@ -36,7 +62,7 @@ static QStack<int> pilaOperadores;//Pila de operadores que se ingresan
 static QStack<int> pilaSaltos;
 static int edo;//Estado del analizado léxico
 static bool sinError; //Varibale para medir si hay error
-static QList<cuadruplo> cuadruplos;
+static QList<QSharedPointer<cuadruplo>> cuadruplos;
 
 static int contCuadruplo; //Variable que cuenta el valor de los cuadruplos
 static int contRes;//Variable que cuenta el valor de res
@@ -118,17 +144,17 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {142},//boolean
                                 {-1},//ε
                                 {8,711,124,28},//ESTATUTOS ; EST_ASIG
-                                {8,706,124,9},//ESTATUTOS ; EST_IF
+                                {8,124,9},//ESTATUTOS ; EST_IF
                                 {8,124,11},//ESTATUTOS ; EST_WHILE
                                 {8,124,12},//ESTATUTOS ; EST_FOR
                                 {8,124,32},//ESTATUTOS ; EST_READ
                                 {8,124,29},//ESTATUTOS ; EST_WRITE
                                 {8,124,27},//ESTATUTOS ; EST_ENTER
-                                {10,8,127,13,126,143},//D ESTATUTOS ) EXPR ( if
+                                {709,10,8,707,127,13,126,143},//D ESTATUTOS ) EXPR ( if
                                 {144},//endif
-                                {144,8,145},//endif ESTATUTOS else
+                                {144,8,708,145},//endif ESTATUTOS else
                                 {146,8,127,13,126,147},//endwhile ESTATUTOS ) EXPR ( while
-                                {148,8,127,13,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
+                                {148,8,127,13,711,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
                                 {13,703,114},//EXPR ||
@@ -220,7 +246,347 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+QString pilaOp;
+QString pilaT;
+QString pilaOper;
+QString pilaSal;
+QString evaluaElemento(int elemento){
+    if(elemento>=700){
+        return "";
+    }
+    switch(elemento){
+    case -1:
+        return "ε";
+    case -2:
+        return "MFF";
+    case 1:
+        return "PROGRAM";
+        break;
+    case 2:
+        return "A";
+        break;
+    case 3:
+        return "DECLARA-LIB";
+        break;
+    case 4:
+        return "DECLARA";
+        break;
+    case 5:
+        return "B";
+        break;
+    case 6:
+        return "C";
+        break;
+    case 7:
+        return "TIPO";
+        break;
+    case 8:
+        return "ESTATUTOS";
+        break;
+    case 9:
+        return "EST_IF";
+        break;
+    case 10:
+        return "D";
+        break;
+    case 11:
+        return "EST_WHILE";
+        break;
+    case 12:
+        return "EST_FOR";
+        break;
+    case 13:
+        return "EXPR";
+        break;
+    case 14:
+        return "E";
+        break;
+    case 15:
+        return "EXPR2";
+        break;
+    case 16:
+        return "F";
+        break;
+    case 17:
+        return "EXPR3";
+        break;
+    case 18:
+        return "G";
+        break;
+    case 19:
+        return "EXPR4";
+        break;
+    case 20:
+        return "H";
+        break;
+    case 21:
+        return "EXPR5";
+        break;
+    case 22:
+        return "I";
+        break;
+    case 23:
+        return "TERM";
+        break;
+    case 24:
+        return "J";
+        break;
+    case 25:
+        return "FACT";
+        break;
+    case 26:
+        return "OPREL";
+        break;
+    case 27:
+        return "EST_ENTER";
+        break;
+    case 28:
+        return "EST_ASIG";
+        break;
+    case 29:
+        return "EST_WRITE";
+        break;
+    case 30:
+        return "K";
+        break;
+    case 31:
+        return "L";
+        break;
+    case 32:
+        return "EST_READ";
+        break;
+    case 33:
+        return "M";
+        break;
+    case 34:
+        return "N";
+        break;
+    case 36:
+        return "$";
+        break;
+    case 100:
+        //cout<<"Palabra reservada"<<endl;
 
+        break;
+    case 101:
+        //cout<<"Identificador"<<endl;
+        return "Identificador";
+        break;
+    case 102:
+        //cout<<"Entero"<<endl;
+        return "Cteentera";
+        break;
+    case 103:
+        //cout<<"Constante decimal"<<endl;
+        return "Ctereal";
+        break;
+    case 104:
+        //cout<<"Constante con notación cientifica"<<endl;
+        return "Ctenotacion cientifica";
+        break;
+    case 105:
+        //cout<<"Constante caracter"<<endl;
+        return "CteCaracter";
+        break;
+    case 106:
+        //cout<<"Constante String"<<endl;
+        return "CteString";
+        break;
+    case 107:
+        //cout<<"Suma"<<endl;
+        return "+";
+        break;
+    case 108:
+        //cout<<"Resta"<<endl;
+        return "-";
+        break;
+    case 109:
+        //cout<<"Multiplicación"<<endl;
+        return "*";
+        break;
+    case 110:
+        //cout<<"División"<<endl;
+        return "/";
+        break;
+    case 111:
+        //cout<<"Modulo"<<endl;
+        return "%";
+        break;
+    case 112:
+        //cout<<"Comentario"<<endl;
+
+        break;
+    case 113:
+        //cout<<"Operador Y"<<endl;
+        return "&&";
+        break;
+    case 114:
+        //cout<<"Operador O"<<endl;
+        return "||";
+        break;
+    case 115:
+        //cout<<"Operador NOT"<<endl;
+        return "!";
+        break;
+    case 116:
+        //cout<<"Operador Diferente"<<endl;
+        return "!=";
+        break;
+    case 117:
+        //cout<<"Igual"<<endl;
+        return "==";
+        break;
+    case 118:
+        //cout<<"Mayor"<<endl;
+        return ">";
+        break;
+    case 119:
+        //cout<<"Mayor Igual"<<endl;
+        return ">=";
+        break;
+    case 120:
+        //cout<<"Menor"<<endl;
+        return "<";
+        break;
+    case 121:
+        //cout<<"Menor Igual"<<endl;
+        return "<=";
+        break;
+    case 122:
+        //cout<<"Asignación"<<endl;
+        return "=";
+        break;
+    case 123:
+        //cout<<"Signo dos puntos"<<endl;
+        return ":";
+        break;
+    case 124:
+        //cout<<"Signo de cierre"<<endl;
+        return ";";
+        break;
+    case 125:
+        //cout<<"Punto"<<endl;
+
+        break;
+    case 126:
+        //cout<<"Parentesis abierto"<<endl;
+        return "(";
+        break;
+    case 127:
+        //cout<<"Par"<<endl;
+        return ")";
+        break;
+    case 128:
+        //cout<<"Corchete abierto"<<endl;
+
+        break;
+    case 129:
+        //cout<<"Corchete cerrado"<<endl;
+
+        break;
+    case 130:
+        //cout<<"Es una coma"<<endl;
+        return ",";
+        break;
+    case 131:
+        //cout<<#Es una libreria"<<endl;
+        return "Identifiacdorlibreria";
+        break;
+    case 132:
+        return "end";
+        break;
+    case 133:
+        return "begin";
+        break;
+    case 134:
+        return "class";
+        break;
+    case 135:
+        return "import";
+        break;
+    case 136:
+        return "def";
+        break;
+    case 137:
+        return "as";
+        break;
+    case 138:
+        return "integer";
+        break;
+    case 139:
+        return "float";
+        break;
+    case 140:
+        return "char";
+        break;
+    case 141:
+        return "string";
+        break;
+    case 142:
+        return "boolean";
+        break;
+    case 143:
+        return "if";
+        break;
+    case 144:
+        return "endif";
+        break;
+    case 145:
+        return "else";
+        break;
+    case 146:
+        return "endwhile";
+        break;
+    case 147:
+        return "while";
+        break;
+    case 148:
+        return "endfor";
+        break;
+    case 149:
+        return "for";
+        break;
+    case 150:
+        return "enter";
+        break;
+    case 151:
+        return "write";
+        break;
+    case 152:
+        return "read";
+        break;
+    default:
+        return "desconocido";
+    }
+}
+void imprimePilaOperandos(){
+    for(int i=0;i<pilaOperandos.size();i++){
+        pilaOp+=pilaOperandos.at(i)+" ";
+    }
+    pilaOp+="\n\n";
+}
+void imprimePilaTipos(){
+    for(int i=0;i<pilaTipos.size();i++){
+        pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
+    }
+    pilaT+="\n\n";
+}
+void imprimePilaOperadores(){
+    for(int i=0;i<pilaOperadores.size();i++){
+        pilaOper+=evaluaElemento(pilaOperadores.at(i))+" ";
+    }
+    pilaOper+="\n\n";
+}
+void imprimePilaSaltos(){
+    for(int i=0;i<pilaSaltos.size();i++)
+        pilaSal+=QString::number(pilaSaltos.at(i));
+    pilaSal+="\n\n";
+}
+
+void formaCuadruplo(QString n,QString oper,QString op1,QString op2,QString res){
+    cuadruplo *obj=new cuadruplo(n,oper,op1,op2,res);
+    cuadruplos.append(QSharedPointer<cuadruplo>(obj));
+}
 
 int Relaciona(char c){
    int valor;
@@ -1138,315 +1504,7 @@ void LlenarPilaProduccion(int fila){
     }
 }
 
-QString evaluaElemento(int elemento){
-    if(elemento>=700){
-        return "";
-    }
-    switch(elemento){
-    case -1:
-        return "ε";
-    case -2:
-        return "MFF";
-    case 1:
-        return "PROGRAM";
-        break;
-    case 2:
-        return "A";
-        break;
-    case 3:
-        return "DECLARA-LIB";
-        break;
-    case 4:
-        return "DECLARA";
-        break;
-    case 5:
-        return "B";
-        break;
-    case 6:
-        return "C";
-        break;
-    case 7:
-        return "TIPO";
-        break;
-    case 8:
-        return "ESTATUTOS";
-        break;
-    case 9:
-        return "EST_IF";
-        break;
-    case 10:
-        return "D";
-        break;
-    case 11:
-        return "EST_WHILE";
-        break;
-    case 12:
-        return "EST_FOR";
-        break;
-    case 13:
-        return "EXPR";
-        break;
-    case 14:
-        return "E";
-        break;
-    case 15:
-        return "EXPR2";
-        break;
-    case 16:
-        return "F";
-        break;
-    case 17:
-        return "EXPR3";
-        break;
-    case 18:
-        return "G";
-        break;
-    case 19:
-        return "EXPR4";
-        break;
-    case 20:
-        return "H";
-        break;
-    case 21:
-        return "EXPR5";
-        break;
-    case 22:
-        return "I";
-        break;
-    case 23:
-        return "TERM";
-        break;
-    case 24:
-        return "J";
-        break;
-    case 25:
-        return "FACT";
-        break;
-    case 26:
-        return "OPREL";
-        break;
-    case 27:
-        return "EST_ENTER";
-        break;
-    case 28:
-        return "EST_ASIG";
-        break;
-    case 29:
-        return "EST_WRITE";
-        break;
-    case 30:
-        return "K";
-        break;
-    case 31:
-        return "L";
-        break;
-    case 32:
-        return "EST_READ";
-        break;
-    case 33:
-        return "M";
-        break;
-    case 34:
-        return "N";
-        break;
-    case 36:
-        return "$";
-        break;
-    case 100:
-        //cout<<"Palabra reservada"<<endl;
 
-        break;
-    case 101:
-        //cout<<"Identificador"<<endl;
-        return "Identificador";
-        break;
-    case 102:
-        //cout<<"Entero"<<endl;
-        return "Cteentera";
-        break;
-    case 103:
-        //cout<<"Constante decimal"<<endl;
-        return "Ctereal";
-        break;
-    case 104:
-        //cout<<"Constante con notación cientifica"<<endl;
-        return "Ctenotacion cientifica";
-        break;
-    case 105:
-        //cout<<"Constante caracter"<<endl;
-        return "CteCaracter";
-        break;
-    case 106:
-        //cout<<"Constante String"<<endl;
-        return "CteString";
-        break;
-    case 107:
-        //cout<<"Suma"<<endl;
-        return "+";
-        break;
-    case 108:
-        //cout<<"Resta"<<endl;
-        return "-";
-        break;
-    case 109:
-        //cout<<"Multiplicación"<<endl;
-        return "*";
-        break;
-    case 110:
-        //cout<<"División"<<endl;
-        return "/";
-        break;
-    case 111:
-        //cout<<"Modulo"<<endl;
-        return "%";
-        break;
-    case 112:
-        //cout<<"Comentario"<<endl;
-
-        break;
-    case 113:
-        //cout<<"Operador Y"<<endl;
-        return "&&";
-        break;
-    case 114:
-        //cout<<"Operador O"<<endl;
-        return "||";
-        break;
-    case 115:
-        //cout<<"Operador NOT"<<endl;
-        return "!";
-        break;
-    case 116:
-        //cout<<"Operador Diferente"<<endl;
-        return "!=";
-        break;
-    case 117:
-        //cout<<"Igual"<<endl;
-        return "==";
-        break;
-    case 118:
-        //cout<<"Mayor"<<endl;
-        return ">";
-        break;
-    case 119:
-        //cout<<"Mayor Igual"<<endl;
-        return ">=";
-        break;
-    case 120:
-        //cout<<"Menor"<<endl;
-        return "<";
-        break;
-    case 121:
-        //cout<<"Menor Igual"<<endl;
-        return "<=";
-        break;
-    case 122:
-        //cout<<"Asignación"<<endl;
-        return "=";
-        break;
-    case 123:
-        //cout<<"Signo dos puntos"<<endl;
-        return ":";
-        break;
-    case 124:
-        //cout<<"Signo de cierre"<<endl;
-        return ";";
-        break;
-    case 125:
-        //cout<<"Punto"<<endl;
-
-        break;
-    case 126:
-        //cout<<"Parentesis abierto"<<endl;
-        return "(";
-        break;
-    case 127:
-        //cout<<"Par"<<endl;
-        return ")";
-        break;
-    case 128:
-        //cout<<"Corchete abierto"<<endl;
-
-        break;
-    case 129:
-        //cout<<"Corchete cerrado"<<endl;
-
-        break;
-    case 130:
-        //cout<<"Es una coma"<<endl;
-        return ",";
-        break;
-    case 131:
-        //cout<<#Es una libreria"<<endl;
-        return "Identifiacdorlibreria";
-        break;
-    case 132:
-        return "end";
-        break;
-    case 133:
-        return "begin";
-        break;
-    case 134:
-        return "class";
-        break;
-    case 135:
-        return "import";
-        break;
-    case 136:
-        return "def";
-        break;
-    case 137:
-        return "as";
-        break;
-    case 138:
-        return "integer";
-        break;
-    case 139:
-        return "float";
-        break;
-    case 140:
-        return "char";
-        break;
-    case 141:
-        return "string";
-        break;
-    case 142:
-        return "boolean";
-        break;
-    case 143:
-        return "if";
-        break;
-    case 144:
-        return "endif";
-        break;
-    case 145:
-        return "else";
-        break;
-    case 146:
-        return "endwhile";
-        break;
-    case 147:
-        return "while";
-        break;
-    case 148:
-        return "endfor";
-        break;
-    case 149:
-        return "for";
-        break;
-    case 150:
-        return "enter";
-        break;
-    case 151:
-        return "write";
-        break;
-    case 152:
-        return "read";
-        break;
-    default:
-        return "desconocido";
-    }
-}
 QString pasosPila;
 void imprimePila(){
     for(int i=0;i<pilaEjecucion.size();i++){
@@ -1455,27 +1513,7 @@ void imprimePila(){
     }
     pasosPila+="\n\n";
 }
-QString pilaOp;
-QString pilaT;
-QString pilaOper;
-void imprimePilaOperandos(){
-    for(int i=0;i<pilaOperandos.size();i++){
-        pilaOp+=pilaOperandos.at(i)+" ";
-    }
-    pilaOp+="\n\n";
-}
-void imprimePilaTipos(){
-    for(int i=0;i<pilaTipos.size();i++){
-        pilaT+=evaluaElemento(pilaTipos.at(i))+" ";
-    }
-    pilaT+="\n\n";
-}
-void imprimePilaOperadores(){
-    for(int i=0;i<pilaOperadores.size();i++){
-        pilaOper+=evaluaElemento(pilaOperadores.at(i))+" ";
-    }
-    pilaOper+="\n\n";
-}
+
 int buscaTipo(){
     int pos=-1;
     if(!pilaOperandosBusqueda.empty()){
@@ -1513,11 +1551,11 @@ void MainWindow::LlenarCuadruplo(){
     while(con<cuadruplos.size()){
         ui->tablaCuadruplos->insertRow(ui->tablaCuadruplos->rowCount());
         int fila=ui->tablaCuadruplos->rowCount()-1;
-        ui->tablaCuadruplos->setItem(fila,0,new QTableWidgetItem(cuadruplos.at(con).n));
-        ui->tablaCuadruplos->setItem(fila,1,new QTableWidgetItem(cuadruplos.at(con).oper));
-        ui->tablaCuadruplos->setItem(fila,2,new QTableWidgetItem(cuadruplos.at(con).op1));
-        ui->tablaCuadruplos->setItem(fila,3,new QTableWidgetItem(cuadruplos.at(con).op2));
-        ui->tablaCuadruplos->setItem(fila,4,new QTableWidgetItem(cuadruplos.at(con).res));
+        ui->tablaCuadruplos->setItem(fila,0,new QTableWidgetItem(cuadruplos.at(con)->getN()));
+        ui->tablaCuadruplos->setItem(fila,1,new QTableWidgetItem(cuadruplos.at(con)->getOper()));
+        ui->tablaCuadruplos->setItem(fila,2,new QTableWidgetItem(cuadruplos.at(con)->getOp1()));
+        ui->tablaCuadruplos->setItem(fila,3,new QTableWidgetItem(cuadruplos.at(con)->getOp2()));
+        ui->tablaCuadruplos->setItem(fila,4,new QTableWidgetItem(cuadruplos.at(con)->getRes()));
         con++;
     }
 }
@@ -1549,8 +1587,8 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
         }else{
             Errores(544);
             supuesto=op1;
@@ -1572,8 +1610,8 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
             sinError=false;
         }
     }else if(pilaOperadores.top()>=116 && pilaOperadores.top()<=121){
@@ -1601,8 +1639,7 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
         }else{
             Errores(544);
             supuesto=op1;
@@ -1624,8 +1661,7 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
             sinError=false;
         }
     }else if(pilaOperadores.top()>=113 && pilaOperadores.top()<=115){
@@ -1653,8 +1689,8 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
         }else{
             Errores(544);
             supuesto=op1;
@@ -1676,14 +1712,16 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-            cuadruplos.append(obj);
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
             sinError=false;
         }
     }
 }
+
 void accionesSemanticayCodigoIntermedio(int accion){
     bool existeOperando=false;
+    QString oper,op1,op2,res;
     switch(accion){
         case 700:
             pilaOperandos.push(textoA);
@@ -1760,16 +1798,40 @@ void accionesSemanticayCodigoIntermedio(int accion){
             break;
         case 707://Accion salto en falso
             //Logica de la accion: pila_operandos.push()y pila_saltos(contcuadruplos).
+            oper="SF";
+            op1=pilaOperandos.top();
+            pilaOperandos.pop();
+            imprimePilaOperandos();
+            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,"","");
+            pilaSaltos.append(contCuadruplo);
+            imprimePilaSaltos();
             break;
         case 708:
             //Se hace un salto incondicional, tope_saltos(contcuadruplos+1) y pila:saltos(pos_actual)
+            for(int i=0;i<cuadruplos.size();i++){
+                if(cuadruplos.at(i)->getN()==QString::number(pilaSaltos.top())){
+                    cuadruplos.at(i)->setRes(QString::number(contCuadruplo+2));
+                    break;
+                }
+            }
+            pilaSaltos.pop();
+            imprimePilaSaltos();
+            oper="SI";
+            formaCuadruplo(QString::number(++contCuadruplo),oper,"","","");
+            pilaSaltos.append(contCuadruplo);
+            imprimePilaSaltos();
             break;
          case 709:
             //Rellenar tope_saltos(ContCuadruplo+1)
+            for(int i=0;i<cuadruplos.size();i++){
+                if(cuadruplos.at(i)->getN()==QString::number(pilaSaltos.top())){
+                    cuadruplos.at(i)->setRes(QString::number(contCuadruplo+1));
+                    break;
+                }
+            }
+            pilaSaltos.pop();
+            imprimePilaSaltos();
 
-            break;
-        case 710:
-            //Sacar Marca de fondo falso, pila:operadores.pop()
             break;
         case 711://Formar cuadruplo de asignación
             int op1=pilaTipos.top();
@@ -1787,8 +1849,8 @@ void accionesSemanticayCodigoIntermedio(int accion){
                         QString op1=pilaOperandos.top();
                         pilaOperandos.pop();
                         imprimePilaOperandos();
-                        cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-                        cuadruplos.append(obj);
+                        formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
                     }else{
                         Errores(544);
                         imprimeYLimpiaPilas();
@@ -1802,8 +1864,8 @@ void accionesSemanticayCodigoIntermedio(int accion){
                         QString op1=pilaOperandos.top();
                         pilaOperandos.pop();
                         imprimePilaOperandos();
-                        cuadruplo obj(QString::number(++contCuadruplo),oper,op1,op2,res);
-                        cuadruplos.append(obj);
+                        formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+
                         sinError=false;
                     }
             }
@@ -1850,12 +1912,16 @@ void ConstruyeGramatica(){
                     accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                     pilaEjecucion.pop();
                 }
+                /*if(token==126){
+                    accionesSemanticayCodigoIntermedio(705);
+                }*/
                 if((token>=101 && token<=106) || token==127){
                     if(!pilaOperadores.empty()){
                         imprimePilaOperandos();
                         accionesSemanticayCodigoIntermedio(704);
                     }
                 }
+
 
             }else{
                 QString tr=evaluaElemento(token);
@@ -1907,12 +1973,15 @@ void MainWindow::on_pushButton_clicked()
     pilaOp="";
     pilaT="";
     pilaOper="";
+    pilaSal="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
     ui->pilaOperandos->setPlainText("");
     ui->pilaTipos->setPlainText("");
     ui->pilaOperadores->setPlainText("");
+    ui->pilaSaltos->setPlainText("");
+    pilaSaltos.clear();
     pilaTipos.clear();
     pilaOperandosBusqueda.clear();
     pilaTiposBusqueda.clear();
@@ -1928,6 +1997,7 @@ void MainWindow::on_pushButton_clicked()
     ui->pilaOperandos->appendPlainText(pilaOp);
     ui->pilaTipos->appendPlainText(pilaT);
     ui->pilaOperadores->appendPlainText(pilaOper);
+    ui->pilaSaltos->appendPlainText(pilaSal);
     LlenarCuadruplo();
 }
 
