@@ -242,8 +242,11 @@ MainWindow::MainWindow(QWidget *parent) :
     QStringList titulos;
     titulos<<"#"<<"oper"<<"op1"<<"op2"<<"res";
     ui->tablaCuadruplos->setHorizontalHeaderLabels(titulos);
+    ui->pilaTipos->setReadOnly(true);
+    ui->pilaOperandos->setReadOnly(true);
+    ui->pilaOperadores->setReadOnly(true);
+    ui->pilaSaltos->setReadOnly(true);
 }
-
 MainWindow::~MainWindow()
 {
     delete ui;
