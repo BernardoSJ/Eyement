@@ -238,6 +238,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Token->setReadOnly(true);
     ui->Error->setReadOnly(true);
     ui->Token_2->setReadOnly(true);
+    ui->salida->setReadOnly(true);
     ui->tablaCuadruplos->setColumnCount(5);
     QStringList titulos;
     titulos<<"#"<<"oper"<<"op1"<<"op2"<<"res";
