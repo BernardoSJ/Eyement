@@ -1582,7 +1582,31 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
           }
         }
         if(estaOp1 || estaOp2)
-            return true;
+            if(oper=="*"){
+                --contRes;
+                pilaOperandos.pop();
+                for(int i=1;i<=op2.toInt();i++){
+                    pilaOperandos.push(op1);
+                    imprimePilaOperandos();
+                }
+                for(int i=1;i<=(op2.toInt()-1);i++){
+
+                    QString oper="+";
+                    QString ope2=pilaOperandos.top();
+                    pilaOperandos.pop();
+                    imprimePilaOperandos();
+                    QString ope1=pilaOperandos.top();
+                    pilaOperandos.pop();
+                    imprimePilaOperandos();
+                    QString res="R"+QString::number(++contRes);
+                    pilaOperandos.push(res);
+                    imprimePilaOperandos();
+                    formaCuadruplo(QString::number(++contCuadruplo),oper,ope1,ope2,res);
+                }
+                return false;
+            }
+            else
+                return true;
         else{
             int ope1=op1.toInt();
             int ope2=op2.toInt();
