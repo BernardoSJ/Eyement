@@ -1565,6 +1565,54 @@ void MainWindow::LlenarCuadruplo(){
         con++;
     }
 }
+bool verificaOperandos(QString op1,QString op2,QString oper){
+        bool estaOp1,estaOp2;
+        for(int i=0;i<op1.length();i++){
+          std::string cadenaOp1 = op1.toStdString();
+          if((cadenaOp1[i]>=97 && cadenaOp1[i]<=122) || (cadenaOp1[i]>=65 && cadenaOp1[i]<=90)){
+              estaOp1=true;
+              break;
+          }
+        }
+        for(int i=0;i<op2.length();i++){
+          std::string cadenaOp2 = op2.toStdString();
+          if((cadenaOp2[i]>=97 && cadenaOp2[i]<=122) || (cadenaOp2[i]>=65 && cadenaOp2[i]<=90)){
+              estaOp2=true;
+              break;
+          }
+        }
+        if(estaOp1 || estaOp2)
+            return true;
+        else{
+            int ope1=op1.toInt();
+            int ope2=op2.toInt();
+            int res=0;
+            if(oper=="+"){
+               res=ope1+ope2;
+               pilaOperandos.pop();
+               imprimePilaOperandos();
+               pilaOperandos.push(QString::number(res));
+               imprimePilaOperandos();
+               contRes--;
+            }else if (oper=="-") {
+               res=ope1-ope2;
+               imprimePilaOperandos();
+               pilaOperandos.push(QString::number(res));
+               imprimePilaOperandos();
+               contRes--;
+            }else if (oper=="*") {
+                res=ope1*ope2;
+                imprimePilaOperandos();
+                pilaOperandos.push(QString::number(res));
+                imprimePilaOperandos();
+                contRes--;
+            }else{
+               return true;
+            }
+            return false;
+        }
+
+}
 void relacionaTiposOper(){
     int op1=pilaTipos.top();
     int op2=pilaTipos.at(pilaTipos.size()-2);
@@ -1593,8 +1641,8 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
-
+            if(verificaOperandos(op1,op2,oper))
+                formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
         }else{
             Errores(544);
             supuesto=op1;
@@ -1616,7 +1664,8 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+            if(verificaOperandos(op1,op2,oper))
+                formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
 
             sinError=false;
         }
