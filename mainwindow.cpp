@@ -1582,7 +1582,7 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
           }
         }
         if(estaOp1 || estaOp2)
-            if(oper=="*"){
+            if(oper=="*" && (estaOp1 && estaOp2==false)){
                 --contRes;
                 pilaOperandos.pop();
                 for(int i=1;i<=op2.toInt();i++){
@@ -1590,7 +1590,6 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
                     imprimePilaOperandos();
                 }
                 for(int i=1;i<=(op2.toInt()-1);i++){
-
                     QString oper="+";
                     QString ope2=pilaOperandos.top();
                     pilaOperandos.pop();
@@ -1626,6 +1625,7 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
                contRes--;
             }else if (oper=="*") {
                 res=ope1*ope2;
+                pilaOperandos.pop();
                 imprimePilaOperandos();
                 pilaOperandos.push(QString::number(res));
                 imprimePilaOperandos();
