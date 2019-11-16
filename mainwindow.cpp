@@ -1565,23 +1565,33 @@ void MainWindow::LlenarCuadruplo(){
         con++;
     }
 }
+
 bool verificaOperandos(QString op1,QString op2,QString oper){
         bool estaOp1,estaOp2;
+        bool esFloatOp1,esFloatOp2;
         for(int i=0;i<op1.length();i++){
           std::string cadenaOp1 = op1.toStdString();
-          if((cadenaOp1[i]>=97 && cadenaOp1[i]<=122) || (cadenaOp1[i]>=65 && cadenaOp1[i]<=90)){
+          if(cadenaOp1[i]=='.'){
+              esFloatOp1=true;
+              break;
+          }
+          if(!(cadenaOp1[i]>=48 && cadenaOp1[i]<=57)){
               estaOp1=true;
               break;
           }
         }
         for(int i=0;i<op2.length();i++){
           std::string cadenaOp2 = op2.toStdString();
-          if((cadenaOp2[i]>=97 && cadenaOp2[i]<=122) || (cadenaOp2[i]>=65 && cadenaOp2[i]<=90)){
+          if(cadenaOp2[i]=='.'){
+              esFloatOp2=true;
+              break;
+          }
+          if(!(cadenaOp2[i]>=48 && cadenaOp2[i]<=57)){
               estaOp2=true;
               break;
           }
         }
-        if(estaOp1 || estaOp2)
+        if((estaOp1 || estaOp2))
             if(oper=="*" && (estaOp1 && estaOp2==false)){
                 --contRes;
                 pilaOperandos.pop();
@@ -1607,33 +1617,100 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
             else
                 return true;
         else{
-            int ope1=op1.toInt();
-            int ope2=op2.toInt();
-            int res=0;
-            if(oper=="+"){
-               res=ope1+ope2;
-               pilaOperandos.pop();
-               imprimePilaOperandos();
-               pilaOperandos.push(QString::number(res));
-               imprimePilaOperandos();
-               contRes--;
-            }else if (oper=="-") {
-               res=ope1-ope2;
-               imprimePilaOperandos();
-               pilaOperandos.push(QString::number(res));
-               imprimePilaOperandos();
-               contRes--;
-            }else if (oper=="*") {
-                res=ope1*ope2;
-                pilaOperandos.pop();
-                imprimePilaOperandos();
-                pilaOperandos.push(QString::number(res));
-                imprimePilaOperandos();
-                contRes--;
+            if(esFloatOp1 || esFloatOp2){
+                float ope1=op1.toFloat();
+                float ope2=op2.toFloat();
+                float res=0;
+                if(oper=="+"){
+                   res=ope1+ope2;
+                   pilaOperandos.pop();
+                   imprimePilaOperandos();
+                   pilaOperandos.push(QString::number(res));
+                   imprimePilaOperandos();
+                   contRes--;
+                }else if (oper=="-") {
+                   res=ope1-ope2;
+                   imprimePilaOperandos();
+                   pilaOperandos.push(QString::number(res));
+                   imprimePilaOperandos();
+                   contRes--;
+                }else if (oper=="*") {
+                    res=ope1*ope2;
+                    pilaOperandos.pop();
+                    imprimePilaOperandos();
+                    pilaOperandos.push(QString::number(res));
+                    imprimePilaOperandos();
+                    contRes--;
+                }else if(oper=="/"){
+                    try {
+                        res=ope1/ope2;
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        pilaOperandos.push(QString::number(res));
+                        imprimePilaOperandos();
+                        contRes--;
+                    } catch (int e) {
+                        sinError=false;
+                        errores+="Hay una división sobre 0\n";
+                    }
+                }else{
+                   return true;
+
+                }
+                return false;
             }else{
-               return true;
+                int ope1=op1.toInt();
+                int ope2=op2.toInt();
+                int res=0;
+                if(oper=="+"){
+                   res=ope1+ope2;
+                   pilaOperandos.pop();
+                   imprimePilaOperandos();
+                   pilaOperandos.push(QString::number(res));
+                   imprimePilaOperandos();
+                   contRes--;
+                }else if (oper=="-") {
+                   res=ope1-ope2;
+                   imprimePilaOperandos();
+                   pilaOperandos.push(QString::number(res));
+                   imprimePilaOperandos();
+                   contRes--;
+                }else if (oper=="*") {
+                    res=ope1*ope2;
+                    pilaOperandos.pop();
+                    imprimePilaOperandos();
+                    pilaOperandos.push(QString::number(res));
+                    imprimePilaOperandos();
+                    contRes--;
+                }else if(oper=="/"){
+                    try {
+                        float ope1=op1.toFloat();
+                        float ope2=op2.toFloat();
+                        float res=ope1/ope2;
+                        pilaOperandos.pop();
+                        imprimePilaOperandos();
+                        pilaOperandos.push(QString::number(res));
+                        imprimePilaOperandos();
+                        contRes--;
+                    } catch (int e) {
+                        sinError=false;
+                        errores+="Hay una división sobre 0\n";
+                    }
+                }else if(oper=="%"){
+                    ope1=op1.toInt();
+                    ope2=op2.toInt();
+                    res=ope1%ope2;
+                    pilaOperandos.pop();
+                    imprimePilaOperandos();
+                    pilaOperandos.push(QString::number(res));
+                    imprimePilaOperandos();
+                    contRes--;
+                }else{
+                    return true;
+                }
+                return false;
             }
-            return false;
+
         }
 
 }
