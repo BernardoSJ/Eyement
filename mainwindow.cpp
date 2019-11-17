@@ -131,7 +131,7 @@ static int matrizPredictiva[34][49]={{1,510,1,510,510,510,510,510,510,510,510,51
 
 
 static int producciones[71][15]={{2,3},//A DECLARA-LIB
-                                {132,8,4,133,101,134}, //end ESTATUTOS DECLARA begin id class
+                                {718,132,8,4,133,101,134}, //end ESTATUTOS DECLARA begin id class
                                 {-1},//ε
                                 {3,124,131,135},//DECLARA-LIB ; id_lib import
                                 {-1},//ε
@@ -1566,6 +1566,23 @@ void MainWindow::LlenarCuadruplo(){
     }
 }
 
+QString encuentraAsignacion(QString operando){
+    int i=0;
+    if(cuadruplos.size()>0){
+        QString encontrado="";
+        while(i<cuadruplos.size()){
+
+            if(cuadruplos.at(i)->getOper().contains("=") && cuadruplos.at(i)->getOp1().contains(operando)){
+                encontrado=cuadruplos.at(i)->getRes();
+
+            }
+            i++;
+        }
+        return encontrado;
+    }
+    return "";
+}
+
 bool verificaOperandos(QString op1,QString op2,QString oper){
         bool estaOp1,estaOp2;
         bool esFloatOp1,esFloatOp2;
@@ -1590,6 +1607,23 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
               estaOp2=true;
               break;
           }
+        }
+        QString encuentraOp;
+        if(estaOp1){
+            encuentraOp=encuentraAsignacion(op1);
+            if(encuentraOp!=""){
+                op1=encuentraOp;
+                estaOp1=false;
+                estaOp2=false;
+            }
+        }
+        if(estaOp2){
+            encuentraOp=encuentraAsignacion(op2);
+            if(encuentraOp!=""){
+                op2=encuentraOp;
+                estaOp2=false;
+                estaOp1=false;
+            }
         }
         if((estaOp1 || estaOp2))
             if(oper=="*" && (estaOp1 && estaOp2==false)){
@@ -1630,6 +1664,7 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
                    contRes--;
                 }else if (oper=="-") {
                    res=ope1-ope2;
+                   pilaOperandos.pop();
                    imprimePilaOperandos();
                    pilaOperandos.push(QString::number(res));
                    imprimePilaOperandos();
@@ -1671,6 +1706,7 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
                    contRes--;
                 }else if (oper=="-") {
                    res=ope1-ope2;
+                   pilaOperandos.pop();
                    imprimePilaOperandos();
                    pilaOperandos.push(QString::number(res));
                    imprimePilaOperandos();
@@ -1991,6 +2027,9 @@ void accionesSemanticayCodigoIntermedio(int accion){
             }
             pilaSaltos.pop();
             imprimePilaSaltos();
+            break;
+         case 718://Agrega un cuadruplo limpio lo cual indica fin de la ejecución
+            formaCuadruplo(QString::number(++contCuadruplo),"","","","");
             break;
          case 717://Concatena lo necesario para estatutos write y read
             for(int i=0;i<contadorRaW;i++){
