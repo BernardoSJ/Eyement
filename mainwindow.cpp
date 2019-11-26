@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QStack>
+#include <QDebug>
 
 using namespace std;
 //Clase en donde se guarda la información de los cuadruplos
@@ -59,7 +60,7 @@ static QStack<QString> pilaOperandosBusqueda;//Pila para facilitar la busqueda d
 static QStack<int> pilaTipos;//Pila de tipos para los identificadores
 static QStack<int> pilaTiposBusqueda;//Pila para los tipos
 static QStack<int> pilaOperadores;//Pila de operadores que se ingresan
-static QStack<int> pilaSaltos;
+static QStack<int> pilaSaltos;//Pila de saltos
 static int edo;//Estado del analizado léxico
 static bool sinError; //Varibale para medir si hay error
 static QList<QSharedPointer<cuadruplo>> cuadruplos;
@@ -68,6 +69,8 @@ static bool estaPresenteRead=false;
 static bool estaPresenteWrite=false;
 static int contCuadruplo; //Variable que cuenta el valor de los cuadruplos
 static int contRes;//Variable que cuenta el valor de res
+
+static QStack<int> pilaWhile;//Pila de control para la parte de adentro de los cuadruplos del while
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
                     {2,100,100,100,100,100,100,100,100,100,2,1,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,3,100,100,100},
                     {2,22,101,101,101,101,101,101,101,101,2,2,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,3,101,101,101},
@@ -155,7 +158,7 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {709,10,8,707,127,13,126,143},//D ESTATUTOS ) EXPR ( if
                                 {144},//endif
                                 {144,8,708,145},//endif ESTATUTOS else
-                                {714,146,8,707,127,13,715,126,147},//endwhile ESTATUTOS ) EXPR ( while
+                                {714,146,8,707,127,13,715,126,719,147},//endwhile ESTATUTOS ) EXPR ( while
                                 {714,148,8,713,127,13,712,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
@@ -1609,20 +1612,27 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
           }
         }
         QString encuentraOp;
+        QString operandoCiclo="";
         if(estaOp1){
             encuentraOp=encuentraAsignacion(op1);
-            if(encuentraOp!=""){
+            if(pilaWhile.size()>0){
+                operandoCiclo=cuadruplos.at(pilaWhile.top()-1)->getOp1();
+                qDebug()<< operandoCiclo;
+                qDebug()<< op1;
+            }
+            if(encuentraOp!="" && op1.contains(operandoCiclo)==false){
                 op1=encuentraOp;
                 estaOp1=false;
-                estaOp2=false;
             }
         }
         if(estaOp2){
             encuentraOp=encuentraAsignacion(op2);
-            if(encuentraOp!=""){
+            if(pilaWhile.size()>0){
+                operandoCiclo=cuadruplos.at(pilaWhile.top()-1)->getOp1();
+            }
+            if(encuentraOp!="" && op2.contains(operandoCiclo)==false){
                 op2=encuentraOp;
                 estaOp2=false;
-                estaOp1=false;
             }
         }
         if((estaOp1 || estaOp2))
@@ -2028,6 +2038,12 @@ void accionesSemanticayCodigoIntermedio(int accion){
             pilaSaltos.pop();
             imprimePilaSaltos();
             break;
+         case 719:
+            pilaWhile.push(contCuadruplo+1);
+            for(int i=0;i<pilaWhile.size();i++){
+                cout<<pilaWhile.at(i)<<endl;
+            }
+            break;
          case 718://Agrega un cuadruplo limpio lo cual indica fin de la ejecución
             formaCuadruplo(QString::number(++contCuadruplo),"","","","");
             break;
@@ -2228,6 +2244,7 @@ void ConstruyeGramatica(){
 void MainWindow::on_pushButton_clicked()
 {
     ui->tablaCuadruplos->setRowCount(0);
+    pilaWhile.clear();
     cuadruplos.clear();
     contCuadruplo=0;
     contRes=0;
