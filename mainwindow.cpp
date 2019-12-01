@@ -25,6 +25,10 @@ class cuadruplo{
         QString getOp2();
         QString getRes();
         void setRes(QString r);
+        void setN(QString n);
+        void setOp1(QString op1);
+        void setOp2(QString op2);
+        void setOper(QString oper);
 
 };
 QString cuadruplo::getN(){
@@ -45,6 +49,18 @@ QString cuadruplo::getRes(){
 void cuadruplo::setRes(QString _r){
     res=_r;
 }
+void cuadruplo::setN(QString _n){
+    n=_n;
+}
+void cuadruplo::setOp1(QString _op1){
+    op1=_op1;
+}
+void cuadruplo::setOp2(QString _op2){
+    op2=_op2;
+}
+void cuadruplo::setOper(QString _oper){
+    oper=_oper;
+}
 cuadruplo::cuadruplo(QString _n,QString _oper,QString _op1,QString _op2,QString _res){
     n=_n;
     oper=_oper;
@@ -64,6 +80,7 @@ static QStack<int> pilaSaltos;//Pila de saltos
 static int edo;//Estado del analizado léxico
 static bool sinError; //Varibale para medir si hay error
 static QList<QSharedPointer<cuadruplo>> cuadruplos;
+static QList<QSharedPointer<cuadruplo>> cuadruplosR;
 static int contadorRaW;//Variable que controla los elementos del read, write
 static bool estaPresenteRead=false;
 static bool estaPresenteWrite=false;
@@ -71,6 +88,7 @@ static int contCuadruplo; //Variable que cuenta el valor de los cuadruplos
 static int contRes;//Variable que cuenta el valor de res
 
 static QStack<int> pilaWhile;//Pila de control para la parte de adentro de los cuadruplos del while
+static QStack<int> pilaFor;//Pila de control para la parte de adentro del for
 static int matriz[23][32]={{4,125,500,500,107,108,500,0,0,0,2,1,109,13,10,12,16,17,18,19,21,20,128,129,126,127,123,124,500,111,130,101},
                     {2,100,100,100,100,100,100,100,100,100,2,1,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,3,100,100,100},
                     {2,22,101,101,101,101,101,101,101,101,2,2,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,101,3,101,101,101},
@@ -158,8 +176,8 @@ static int producciones[71][15]={{2,3},//A DECLARA-LIB
                                 {709,10,8,707,127,13,126,143},//D ESTATUTOS ) EXPR ( if
                                 {144},//endif
                                 {144,8,708,145},//endif ESTATUTOS else
-                                {714,146,8,707,127,13,715,126,719,147},//endwhile ESTATUTOS ) EXPR ( while
-                                {714,148,8,713,127,13,712,123,28,126,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
+                                {720,714,146,8,707,127,13,715,126,719,147},//endwhile ESTATUTOS ) EXPR ( while
+                                {722,714,148,8,713,127,13,712,123,28,126,721,149},//endfor ESTATUTOS ) EXPR : EST_ASIG ( for
                                 {14,15},//E EXPR2
                                 {-1},//ε
                                 {13,703,114},//EXPR ||
@@ -1617,12 +1635,21 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
             encuentraOp=encuentraAsignacion(op1);
             if(pilaWhile.size()>0){
                 operandoCiclo=cuadruplos.at(pilaWhile.top()-1)->getOp1();
-                qDebug()<< operandoCiclo;
-                qDebug()<< op1;
             }
-            if(encuentraOp!="" && op1.contains(operandoCiclo)==false){
-                op1=encuentraOp;
-                estaOp1=false;
+            if(pilaFor.size()>0){
+                operandoCiclo=cuadruplos.at(pilaFor.top()-1)->getOp1();
+            }
+            if(encuentraOp!=""){
+                if(operandoCiclo!=""){
+                    if(op1.contains(operandoCiclo)==false){
+                        op1=encuentraOp;
+                        estaOp1=false;
+                    }
+                }else{
+                    op1=encuentraOp;
+                    estaOp1=false;
+                }
+
             }
         }
         if(estaOp2){
@@ -1630,12 +1657,22 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
             if(pilaWhile.size()>0){
                 operandoCiclo=cuadruplos.at(pilaWhile.top()-1)->getOp1();
             }
-            if(encuentraOp!="" && op2.contains(operandoCiclo)==false){
-                op2=encuentraOp;
-                estaOp2=false;
+            if(pilaFor.size()>0){
+                operandoCiclo=cuadruplos.at(pilaFor.top()-1)->getOp1();
+            }
+            if(encuentraOp!=""){
+                if(operandoCiclo!=""){
+                    if(op2.contains(operandoCiclo)==false){
+                        op2=encuentraOp;
+                        estaOp2=false;
+                    }
+                }else{
+                    op2=encuentraOp;
+                    estaOp2=false;
+                }
             }
         }
-        if((estaOp1 || estaOp2))
+        if((estaOp1 || estaOp2)){
             if(oper=="*" && (estaOp1 && estaOp2==false)){
                 --contRes;
                 pilaOperandos.pop();
@@ -1660,7 +1697,7 @@ bool verificaOperandos(QString op1,QString op2,QString oper){
             }
             else
                 return true;
-        else{
+        }else{
             if(esFloatOp1 || esFloatOp2){
                 float ope1=op1.toFloat();
                 float ope2=op2.toFloat();
@@ -1788,8 +1825,31 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            if(verificaOperandos(op1,op2,oper))
-                formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+            if(verificaOperandos(op1,op2,oper)){
+                if(op2!="0" && op1!="0"){
+                    if(encuentraAsignacion(op1)!="0" && encuentraAsignacion(op2)!="0"){
+                        formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+                    }else{
+                        pilaOperandos.pop();
+                        --contCuadruplo;
+                        --contRes;
+                        if(encuentraAsignacion(op1)!="0"){
+                            pilaOperandos.push(op1);
+                        }else{
+                            pilaOperandos.push(op2);
+                        }
+                    }
+                }else{
+                    pilaOperandos.pop();
+                    --contCuadruplo;
+                    --contRes;
+                    if(op1=="0"){
+                        pilaOperandos.push(op2);
+                    }else{
+                        pilaOperandos.push(op1);
+                    }
+                }
+            }
         }else{
             Errores(544);
             supuesto=op1;
@@ -1811,8 +1871,33 @@ void relacionaTiposOper(){
             QString res="R"+QString::number(++contRes);
             pilaOperandos.push(res);
             imprimePilaOperandos();
-            if(verificaOperandos(op1,op2,oper))
-                formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+            if(verificaOperandos(op1,op2,oper)){
+                if(op2!="0" && op1!="0"){
+                    if(encuentraAsignacion(op1)!="0" && encuentraAsignacion(op2)!="0"){
+
+                        formaCuadruplo(QString::number(++contCuadruplo),oper,op1,op2,res);
+                    }else{
+                        pilaOperandos.pop();
+                        --contCuadruplo;
+                        --contRes;
+                        if(encuentraAsignacion(op1)!="0"){
+                            pilaOperandos.push(op2);
+                        }else{
+                            pilaOperandos.push(op1);
+                        }
+                    }
+
+                }else{
+                    pilaOperandos.pop();
+                    --contCuadruplo;
+                    --contRes;
+                    if(op1=="0"){
+                        pilaOperandos.push(op2);
+                    }else{
+                        pilaOperandos.push(op1);
+                    }
+                }
+            }
 
             sinError=false;
         }
@@ -1924,6 +2009,9 @@ void relacionaTiposOper(){
 void accionesSemanticayCodigoIntermedio(int accion){
     bool existeOperando=false;
     QString oper,op1,op2,res;
+    QStack<int> posicionesCuadruplos;
+    QList<QSharedPointer<cuadruplo>> cuadruplosACambiar;
+    int inicio,final;
     switch(accion){
         case 700:
             pilaOperandos.push(textoA);
@@ -2038,11 +2126,102 @@ void accionesSemanticayCodigoIntermedio(int accion){
             pilaSaltos.pop();
             imprimePilaSaltos();
             break;
-         case 719:
-            pilaWhile.push(contCuadruplo+1);
+         case 722:
+        pilaFor.push(contCuadruplo);
+        for(int i=0;i<pilaFor.size();i++){
+            cout<<pilaFor.at(i)<<endl;
+        }
+        inicio=pilaFor.at(pilaFor.size()-2);
+        final=pilaFor.top();
+        for(int i=inicio;i<=final;i++){
+            cuadruplosR.append(cuadruplos.at(i-1));
+            if(cuadruplos.at(i-1)->getOper().contains("=") && cuadruplos.at(i-1)->getRes().contains("R")==false){
+                posicionesCuadruplos.push(i-1);
+                cuadruplosACambiar.append(cuadruplos.at(i-1));
+            }
+        }
+
+
+        if(posicionesCuadruplos.size()>0){
+            for (int i=0;i<posicionesCuadruplos.size();i++) {
+                cuadruplosR.removeAt(posicionesCuadruplos.at(i));
+            }
+
+            for (int i=0;i<cuadruplosACambiar.size();i++) {
+                cuadruplosR.push_front(cuadruplosACambiar.at(i));
+            }
+
+            for(int i=0;i<cuadruplosR.size();i++){
+                cuadruplosR.at(i)->setN(QString::number(inicio));
+                ++inicio;
+            }
+
+
+
+            for(int i=0;i<cuadruplosR.size();i++){
+                cuadruplos.append(cuadruplosR.at(i));
+            }
+
+            for(int i=cuadruplosR.size()-1;i>=0;i--){
+                cuadruplos.removeAt(i);
+            }
+
+
+
+        }
+            break;
+         case 721:
+            pilaFor.push(contCuadruplo+1);
+            break;
+         case 720://Optimizar asignaciones while
+            pilaWhile.push(contCuadruplo);
             for(int i=0;i<pilaWhile.size();i++){
                 cout<<pilaWhile.at(i)<<endl;
             }
+            inicio=pilaWhile.at(pilaWhile.size()-2);
+            final=pilaWhile.top();
+            for(int i=inicio;i<=final;i++){
+                cuadruplosR.append(cuadruplos.at(i-1));
+                if(cuadruplos.at(i-1)->getOper().contains("=") && cuadruplos.at(i-1)->getRes().contains("R")==false){
+                    posicionesCuadruplos.push(i-1);
+                    cuadruplosACambiar.append(cuadruplos.at(i-1));
+                }
+            }
+
+
+            if(posicionesCuadruplos.size()>0){
+                for (int i=0;i<posicionesCuadruplos.size();i++) {
+                    cuadruplosR.removeAt(posicionesCuadruplos.at(i));
+                }
+
+                for (int i=0;i<cuadruplosACambiar.size();i++) {
+                    cuadruplosR.push_front(cuadruplosACambiar.at(i));
+                }
+
+                for(int i=0;i<cuadruplosR.size();i++){
+                    cuadruplosR.at(i)->setN(QString::number(inicio));
+                    ++inicio;
+                }
+
+
+
+                for(int i=0;i<cuadruplosR.size();i++){
+                    cuadruplos.append(cuadruplosR.at(i));
+                }
+
+                for(int i=cuadruplosR.size()-1;i>=0;i--){
+                    cuadruplos.removeAt(i);
+                }
+
+
+
+            }
+
+
+
+            break;
+         case 719:
+            pilaWhile.push(contCuadruplo+1);
             break;
          case 718://Agrega un cuadruplo limpio lo cual indica fin de la ejecución
             formaCuadruplo(QString::number(++contCuadruplo),"","","","");
@@ -2188,6 +2367,10 @@ void ConstruyeGramatica(){
                 if(pilaEjecucion.top()>=700 && pilaEjecucion.top()<800){
                     accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
                     pilaEjecucion.pop();
+                    if(pilaEjecucion.top()>=700){
+                        accionesSemanticayCodigoIntermedio(pilaEjecucion.top());
+                        pilaEjecucion.pop();
+                    }
                 }
                 if(token==151){
                     estaPresenteWrite=true;
@@ -2241,11 +2424,343 @@ void ConstruyeGramatica(){
     }
 }
 
+static QString salida;
+void generarSalida(){
+    int i=0;
+    int valor3=0;
+    QList<QString> identidicadores;
+    QList<QString> valorIdentificadores;
+    while(i<cuadruplos.size()){
+        if(cuadruplos.at(i)->getOp1()=="" && cuadruplos.at(i)->getOp2()=="" && cuadruplos.at(i)->getOper()=="" && cuadruplos.at(i)->getRes()==""){
+           i=cuadruplos.size();
+        }else{
+
+            if(cuadruplos.at(i)->getOper().contains("=") && cuadruplos.at(i)->getOper().contains("==")==false && cuadruplos.at(i)->getOper().contains("<=")==false && cuadruplos.at(i)->getOper().contains(">=")==false){
+                if(cuadruplos.at(i)->getRes().contains("R")){
+                    QString op1=cuadruplos.at(i-1)->getOp1();
+                    QString op2=cuadruplos.at(i-1)->getOp2();
+                    bool declaradoOp1,declaradoOp2,evaluado=false;
+                    int encontrado=0;
+                    for (int j=0;j<identidicadores.size();j++) {
+                        if(identidicadores.at(j).contains(op1)){
+                            declaradoOp1=true;
+                            encontrado=j;
+                        }
+
+                        if(identidicadores.at(j).contains(op2)){
+                            declaradoOp2=true;
+                            encontrado=j;
+                        }
+                    }
+
+                    std::string cadenaOp1 = op1.toStdString();
+                    bool esIdentificador1;
+                    for(int j=0;j<op1.length();j++){
+                        if(!(cadenaOp1[j]>=48 && cadenaOp1[j]<=57)){
+                            esIdentificador1=true;
+                        }
+                    }
+
+                    std::string cadenaOp2 = op2.toStdString();
+                    bool esIdentificador2;
+                    for(int j=0;j<op2.length();j++){
+                        if(!(cadenaOp2[j]>=48 && cadenaOp2[j]<=57)){
+                            esIdentificador2=true;
+                        }
+                    }
+
+                    if(declaradoOp1 && evaluado==false){
+                        if(esIdentificador1 && declaradoOp1){
+                             int valor1=valorIdentificadores.at(encontrado).toInt();
+                             int valor2=op2.toInt();
+                             cout<<valor1<<endl;
+                             cout<<valor2<<endl;
+                             if(cuadruplos.at(i-1)->getOper().contains("+")){
+                                 valor3=valor1+valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("-")){
+                                 valor3=valor1-valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("*")){
+                                 valor3=valor1*valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("/")){
+                                 valor3=valor1/valor2;
+                             }
+                             cout<<valor3<<endl;
+                             evaluado=true;
+                        }
+                    }else{
+                        int valor1=0;
+                        int valor2=op2.toInt();
+
+                        if(cuadruplos.at(i-1)->getOper().contains("+")){
+                            valor3=valor1+valor2;
+                        }
+                        if(cuadruplos.at(i-1)->getOper().contains("-")){
+                            valor3=valor1-valor2;
+                        }
+                        if(cuadruplos.at(i-1)->getOper().contains("*")){
+                            valor3=valor1*valor2;
+                        }
+                        if(cuadruplos.at(i-1)->getOper().contains("/")){
+                            valor3=valor1/valor2;
+                        }
+                        evaluado=true;
+                    }
+
+
+                    if(declaradoOp2 && evaluado==false){
+                        if(esIdentificador2 && declaradoOp2){
+                             int valor1=op1.toInt();
+                             int valor2=valorIdentificadores.at(encontrado).toInt();
+
+                             if(cuadruplos.at(i-1)->getOper().contains("+")){
+                                 valor3=valor1+valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("-")){
+                                 valor3=valor1-valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("*")){
+                                 valor3=valor1*valor2;
+                             }
+                             if(cuadruplos.at(i-1)->getOper().contains("/")){
+                                 valor3=valor1/valor2;
+                             }
+                        }
+                    }else{
+                        if(evaluado==false){
+                            int valor1=op1.toInt();
+                            int valor2=0;
+                            cout<<"Entra"<<endl;
+                            cout<<valor1<<endl;
+                            cout<<valor2<<endl;
+                            if(cuadruplos.at(i-1)->getOper().contains("+")){
+                                valor3=valor1+valor2;
+                            }
+                            if(cuadruplos.at(i-1)->getOper().contains("-")){
+                                valor3=valor1-valor2;
+                            }
+                            if(cuadruplos.at(i-1)->getOper().contains("*")){
+                                valor3=valor1*valor2;
+                            }
+                            if(cuadruplos.at(i-1)->getOper().contains("/")){
+                                valor3=valor1/valor2;
+                            }
+                        }
+
+                    }
+
+
+
+                    if(identidicadores.size()>0){
+                        int pos=0;
+                        bool existe;
+                        for(int j=0;j<identidicadores.size();j++){
+                            if(identidicadores.at(j).contains(cuadruplos.at(j)->getOp1())){
+                                pos=j;
+                                existe=true;
+                            }
+                        }
+                        if(existe){
+                            valorIdentificadores.replace(pos,QString::number(valor3));
+                        }else{
+                            identidicadores.append(cuadruplos.at(i)->getOp1());
+                            valorIdentificadores.append(QString::number(valor3));
+                        }
+                    }else{
+                        identidicadores.append(cuadruplos.at(i)->getOp1());
+                        valorIdentificadores.append(QString::number(valor3));
+
+                    }
+                }else{
+                    if(identidicadores.size()>0){
+                      int pos=0;
+                      bool existe;
+                      for(int j=0;j<identidicadores.size();j++){
+                          if(identidicadores.at(j).contains(cuadruplos.at(j)->getOp1())){
+                              pos=j;
+                              existe=true;
+                          }
+                      }
+                      if(existe){
+                          valorIdentificadores.replace(pos,cuadruplos.at(i)->getRes());
+                      }else{
+                          identidicadores.append(cuadruplos.at(i)->getOp1());
+                          valorIdentificadores.append(cuadruplos.at(i)->getRes());
+                      }
+                    }else{
+                        identidicadores.append(cuadruplos.at(i)->getOp1());
+                        valorIdentificadores.append(cuadruplos.at(i)->getRes());
+                    }
+                }
+
+            }
+
+            if(cuadruplos.at(i)->getOper().contains("write")){
+
+                if(cuadruplos.at(i)->getRes().contains(34)){
+                   std::string cadena = cuadruplos.at(i)->getRes().toStdString();
+                   QString imprime="";
+                   for(int j=0;j<cuadruplos.at(i)->getRes().length();j++){
+                       if(cadena[j]==34){
+                           continue;
+                       }else{
+                           imprime+=cadena[j];
+                       }
+                   }
+                   salida+=imprime;
+                }else{
+                    std::string cadena = cuadruplos.at(i)->getRes().toStdString();
+                    bool esIdentificador;
+                    for(int j=0;j<cuadruplos.at(i)->getRes().length();j++){
+                        if(!(cadena[j]>=48 && cadena[j]<=57)){
+                            esIdentificador=true;
+                        }
+                    }
+                    if(esIdentificador){
+                        if(cuadruplos.at(i)->getRes().contains("true") || cuadruplos.at(i)->getRes().contains("false")){
+                            salida+=cuadruplos.at(i)->getRes();
+                        }else{
+                            bool dec;
+                            int pos;
+                            if(identidicadores.size()>0){
+                                for(int j=0;j<identidicadores.size();j++){
+                                    if(identidicadores.at(j).contains(cuadruplos.at(i)->getRes())){
+                                       dec=true;
+                                       pos=j;
+                                    }
+                                }
+                                if(dec){
+                                   salida+=valorIdentificadores.at(pos);
+                                }else{
+                                   salida+="0";
+                                }
+                            }else{
+                                salida+="0";
+                            }
+                        }
+                    }else{
+                        salida+=cuadruplos.at(i)->getRes();
+                    }
+                }
+
+            }
+            if(cuadruplos.at(i)->getOper().contains("enter")){
+                salida+="\n";
+
+            }
+
+            if(cuadruplos.at(i)->getOper().contains("SI")){
+                i=cuadruplos.at(i)->getRes().toInt()-2;
+            }
+
+            if(cuadruplos.at(i)->getOper().contains("SF") || cuadruplos.at(i)->getOper().contains("SV")){
+                    QString op1=cuadruplos.at(i-1)->getOp1();
+                    int op2=cuadruplos.at(i-1)->getOp2().toInt();
+                    QString oper=cuadruplos.at(i-1)->getOper();
+                    bool exi;
+                    int pos=0;
+
+                    for (int j=0;j<identidicadores.size();j++) {
+                                    if(identidicadores.at(j).contains(op1)){
+                                        exi=true;
+                                        pos=j;
+                                    }
+                                }
+
+                                if(exi){
+                                    int vOb=valorIdentificadores.at(pos).toInt();
+                                    if(oper.contains(">")){
+                                        if((vOb>op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                    }
+                                    if(oper.contains("<")){
+                                        int vOb=valorIdentificadores.at(pos).toInt();
+                                        cout<<vOb<<endl;
+                                        cout<<op2<<endl;
+                                        if((vOb<op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                    }
+                                    if(oper.contains(">=")){
+                                        int vOb=valorIdentificadores.at(pos).toInt();
+                                        if((vOb>=op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                    }
+                                    if(oper.contains("<=")){
+                                        int vOb=valorIdentificadores.at(pos).toInt();
+                                        if((vOb<=op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                    }
+                                    if(oper.contains("==")){
+                                        int vOb=valorIdentificadores.at(pos).toInt();
+                                        if((vOb==op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+                                    }
+                                    if(oper.contains("!=")){
+                                        int vOb=valorIdentificadores.at(pos).toInt();
+                                        if((vOb!=op2)==false)
+                                            i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                    }
+                                }else{
+                                   int vOb=0;
+                                   if(oper.contains(">")){
+                                       if((vOb>op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+                                   if(oper.contains("<")){
+                                       int vOb=0;
+                                       if((vOb<op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+                                   if(oper.contains(">=")){
+                                       int vOb=0;
+                                       if((vOb>=op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+                                   if(oper.contains("<=")){
+                                       int vOb=0;
+                                       if((vOb<=op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+                                   if(oper.contains("==")){
+                                       if((vOb==op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+                                   if(oper.contains("!=")){
+                                       int vOb=0;
+                                       if((vOb!=op2)==false)
+                                           i=cuadruplos.at(i)->getRes().toInt()-2;
+
+                                   }
+
+                                }
+            }
+
+
+        }
+           i++;
+
+
+
+    }
+}
 void MainWindow::on_pushButton_clicked()
 {
     ui->tablaCuadruplos->setRowCount(0);
     pilaWhile.clear();
     cuadruplos.clear();
+    cuadruplosR.clear();
     contCuadruplo=0;
     contRes=0;
     Tokens="";
@@ -2255,6 +2770,7 @@ void MainWindow::on_pushButton_clicked()
     pilaT="";
     pilaOper="";
     pilaSal="";
+    salida="";
     ui->Token->setPlainText("");
     ui->Error->setPlainText("");
     ui->Token_2->setPlainText("");
@@ -2262,6 +2778,7 @@ void MainWindow::on_pushButton_clicked()
     ui->pilaTipos->setPlainText("");
     ui->pilaOperadores->setPlainText("");
     ui->pilaSaltos->setPlainText("");
+    ui->salida->setPlainText("");
     pilaSaltos.clear();
     pilaTipos.clear();
     pilaOperandosBusqueda.clear();
@@ -2269,8 +2786,11 @@ void MainWindow::on_pushButton_clicked()
     pilaOperadores.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
-    if(errores!=""){
+    if(errores!="" && sinError==false){
         QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos o semánticos");
+    }else{
+        generarSalida();
+        ui->salida->setPlainText(salida);
     }
     ui->Token->appendPlainText(Tokens);
     ui->Error->appendPlainText(errores);
@@ -2313,6 +2833,8 @@ void MainWindow::on_pushButton_3_clicked()
     ui->textoAnalizar->setPlainText("");
     ui->tablaCuadruplos->setRowCount(0);
     cuadruplos.clear();
+    cuadruplosR.clear();
+    pilaWhile.clear();
     contCuadruplo=0;
     contRes=0;
     Tokens="";
