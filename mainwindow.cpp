@@ -2431,6 +2431,7 @@ void generarSalida(){
     QList<QString> identidicadores;
     QList<QString> valorIdentificadores;
     while(i<cuadruplos.size()){
+
         if(cuadruplos.at(i)->getOp1()=="" && cuadruplos.at(i)->getOp2()=="" && cuadruplos.at(i)->getOper()=="" && cuadruplos.at(i)->getRes()==""){
            i=cuadruplos.size();
         }else{
