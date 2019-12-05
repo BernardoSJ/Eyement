@@ -2756,6 +2756,21 @@ void generarSalida(){
 
     }
 }
+
+void optimizacionSaltos(){
+    QStack<int> posiblesSaltos;
+    for(int i=0;i<cuadruplos.size();i++){
+        if(cuadruplos.at(i)->getOper().contains("SI")){
+            int j=cuadruplos.at(i)->getRes().toInt()-1;
+            if(cuadruplos.at(j)->getOper().contains("SI")){
+                posiblesSaltos.push(i);
+                for(int k=0;k<posiblesSaltos.size();k++){
+                    cuadruplos.at(posiblesSaltos.at(k))->setRes(cuadruplos.at(j)->getRes());
+                }
+            }
+        }
+    }
+}
 void MainWindow::on_pushButton_clicked()
 {
     ui->tablaCuadruplos->setRowCount(0);
@@ -2787,6 +2802,7 @@ void MainWindow::on_pushButton_clicked()
     pilaOperadores.clear();
     texto=ui->textoAnalizar->toPlainText();
     ConstruyeGramatica();
+    optimizacionSaltos();
     if(errores!="" && sinError==false){
         QMessageBox::about(this,"Mensaje","La sintaxis contiene algunos errores léxicos o sintácticos o semánticos");
     }else{
